@@ -2,6 +2,7 @@ foreach(example
     VogelsAbbottNet
     Brunel10K
     SimpleExample
+    WXTest
     )
   add_executable(${example} ${example}.cpp)
   target_link_libraries(${example}
