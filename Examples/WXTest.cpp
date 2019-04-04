@@ -1,17 +1,19 @@
 /*  try to reproduce the model for the paper Psychological Review, 125(4), 545-571.
  *  with the latest version of SPIKE
  *  reference: 
-        1. branch aki_test/Experiment/ConductanceExperiment1.cpp.
-        2. Gisi_Model.cpp in https://github.com/nasiryahm/LabVisionIntro
+ 1. branch aki_test/Experiment/ConductanceExperiment1.cpp.
+ 2. Gisi_Model.cpp in https://github.com/nasiryahm/LabVisionIntro
  */
 
 #include "Spike/Spike.hpp"
 
+#include <sys/stat.h>
+
 using namespace std;
 
 /** Function to load weights from a file into a SpikingModel.
-    save time. No need to run the model again
-*/
+  save time. No need to run the model again
+ */
 void load_weights(
         SpikingModel* Model,      /**< SpikingModel Pointer to the model which should load weights */
         std::string weightloc,    /**< String path to the file from which weights should be loaded */
@@ -22,6 +24,10 @@ void load_weights(
 
     if (binaryfile){
         weightfile.open (weightloc, ios::in | ios::binary);
+        if(!weightfile.good()) {
+            cout<<" !!! Current weight file: "<< weightloc << "does not exist,  exit !!!"<<endl;
+            exit(0);
+        }
         while( weightfile.good() )
         {
             float currentweight;
@@ -34,6 +40,10 @@ void load_weights(
         }
     } else {
         weightfile.open(weightloc);
+        if(!weightfile.good()) {
+            cout<<" !!! Current weight file: "<< weightloc << " does not exist,  exit !!!"<<endl;
+            exit(0);
+        }
         while( weightfile.good() )
         {
             string fileline;
@@ -56,7 +66,8 @@ void load_weights(
     for (int i=0; i < WeightsToLoad.size(); i++){
         Model->spiking_synapses->synaptic_efficacies_or_weights[i] = WeightsToLoad[i];
     }
-    printf("%ld Weights Loaded.\n", WeightsToLoad.size());
+
+    cout<<WeightsToLoad.size()<<" Weights Loaded from "<<weightloc<<endl;
 }
 
 /** Function to equalize the mean rate of the stimuli being presented to the network.
@@ -97,31 +108,66 @@ int main (int argc, char *argv[])
      *
      */
 
-    int starting_epoch = 1;  // if !=1, it's trained and just load the parameter 
-    int lr_stop_epoch = 200;  // ???
-    // Input of simulation name, number of epochs, and input folder name
-    std::string modelpath = "../";
-    std::string modelname = "Gisi_Model.cpp";
-    string name_of_current_stimulation = "TestNetwork";//argv[1];
+    //.. loading run configuation parameters ...
+    //
+    int starting_time = 0;  // if !=0, it's trained and just load the parameter and continue training. When train again, starting_time is the end of the last training time. 
+    float simtime = 2.0f;  //simulation time in seconds starting from the starting_time
+    bool plasticity_on = false;  // turn on the plasticity or not
+    float timestep = 0.00002;  // can set to any value for testing. set it to original_timestep when run 
 
     // Files/Paths relevent to the input set
-    std::string filepath = "../Data/MatlabGaborFilter/";
-    std::string test_filelist = "FileList_test.txt";
-    std::string train_filelist = "FileList_train_short.txt";
+    string source = "/home/wxie/AI/Spike/master/Spike/";
+    string filepath = source + "Data/MatlabGaborFilter/";
+    string inputs_for_test_name = "simpleShapes";
+    string current_weight= "";  //since default it no training yet, there's no current weight location
+    
+    ifstream configFile;
+    configFile.open ("run_config.txt", ifstream::in);
+    if(!configFile.good()) {
+        cout<<" run configuation file does not exist. Using the default value"<<endl;
+    } else {
+        configFile >> starting_time;
+        configFile >> simtime;
+        configFile >> plasticity_on;
+        configFile >> timestep;
+        configFile >> filepath;
+        configFile >> inputs_for_test_name;
+        configFile >> current_weight;
+    }
 
-    // Allow the user to input the number of epochs for which the network should be trained.
-    cout << "Enter the times the network should be trained: \n";
-    int input_epochs = 0;//std::stoi(argv[2]);
-    std::cin >> input_epochs;
-    int number_of_epochs_train = input_epochs;
+    // output file location ...
+    filepath = source + filepath;
+    current_weight = source + current_weight;
+    string output_location = source + "output/Start"+to_string(starting_time)+"End"+to_string(starting_time+simtime)+"/";
+    string neuron_dir  = output_location + "neuron_dir/";
+    string input_dir  = output_location + "input_dir/";
+    string synapse_dir  = output_location + "synapse_dir/";
 
-    // Finally the experiment name is set up to be a combination of the stimulation name and number of epochs
-    string experimentName = name_of_current_stimulation + string("_") + string(to_string(input_epochs)) + string("_epochs");
-    string inputs_for_test_name = "Inputs_Gisi_BO";
+    if( mkdir(output_location.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
+        mkdir(neuron_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
+        mkdir(input_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
+        mkdir(synapse_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
 
+        cout<<" !!! One or all of  following output directory can not be created, exit !!!"<<endl;
+        cout<<output_location<<endl;
+        cout<<neuron_dir<<endl;
+        cout<<input_dir<<endl;
+        cout<<synapse_dir<<endl;
+        exit(0);
+    }
+
+    cout<<" -----------------------------------------------"<<endl;
+    cout<<" starting_time: "<<starting_time<<endl;
+    cout<<" new_sim_time: "<<simtime<<endl;
+    cout<<" plasticity_on: "<<plasticity_on<<endl;
+    cout<<" timestep: "<<timestep<<endl;
+    cout<<" input file: "<<filepath + inputs_for_test_name <<endl;
+    cout<<" current weight : "<<current_weight<<endl;
+    cout<<" output location: "<<output_location<<endl;
+    cout<<" -----------------------------------------------"<<endl;
+    //..
     // The timestep at which this network is run is entered here.
     // Note that the timestep can be set higher than usual for any period in which you want to generally test the network behaviour.
-    float timestep = 0.00002;  // can set to any value for testing. set it to original_timestep when run 
     float original_timestep = 0.00002;      // This value is the timestep used in Aki's spiking investigations
 
     // These flags set how the experiment shall be run
@@ -312,7 +358,8 @@ int main (int argc, char *argv[])
     TimerWithMessages * adding_input_neurons_timer = new TimerWithMessages("Adding Input Neurons...\n");
 
     // GaborFilter result: Need to include this into a this code
-    input_neurons->set_up_rates(test_filelist.c_str(), "FilterParameters.txt", (filepath+inputs_for_test_name+"/").c_str(), max_FR_of_input_Gabor);
+    input_neurons->set_up_rates("FileList.txt", "FilterParameters.txt", ("../../Data/MatlabGaborFilter/"+inputs_for_test_name+"/").c_str(), max_FR_of_input_Gabor);
+    equalize_rates(input_neurons, 0.1f);
 
     image_poisson_input_spiking_neuron_parameters_struct * image_poisson_input_spiking_group_params = new image_poisson_input_spiking_neuron_parameters_struct();
     image_poisson_input_spiking_group_params->rate = 30.0f;
@@ -453,7 +500,7 @@ int main (int argc, char *argv[])
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = biological_conductance_scaling_constant_lambda_E2E_L;
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->connectivity_type = CONNECTIVITY_TYPE_GAUSSIAN_SAMPLE;
         if (E2E_L_STDP_ON)
-          E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->plasticity_vec.push_back(evans_stdp);
+            E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->plasticity_vec.push_back(evans_stdp);
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_standard_deviation = gaussian_synapses_standard_deviation_E2E_L;
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->reversal_potential_Vhat = 0.0;
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->decay_term_tau_g = decay_term_tau_g_E2E_L;
@@ -497,18 +544,14 @@ int main (int argc, char *argv[])
      */
 
     // if it's already trained, load any weights before finalising the model
-    if (starting_epoch != 1){
-        std::string weightlocation = "output/";
-        weightlocation = "output/" + experimentName + "/" + "training/" + "epoch" + string(to_string(starting_epoch)) + "/" + "Synapses_NetworkWeights.bin";
-        load_weights(model, weightlocation, true);
+    if (starting_time != 0){
+        load_weights(model, current_weight, true);
     }
     model->finalise_model();
-
-    float simtime = 5.0f;
-    bool plasticity_on = true;
     model->run(simtime, plasticity_on);
 
-    spike_monitor->save_spikes_as_txt("./neuron_dir/");
-    input_spike_monitor->save_spikes_as_txt("./input_dir/");
-    model->spiking_synapses->save_connectivity_as_txt("./synapse_dir/");
+    //use binary mode. The text mode is too slow ..
+    spike_monitor->save_spikes_as_binary(neuron_dir);
+    input_spike_monitor->save_spikes_as_binary(input_dir);
+    model->spiking_synapses->save_connectivity_as_binary(synapse_dir);
 }
