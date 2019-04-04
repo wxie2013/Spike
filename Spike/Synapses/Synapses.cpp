@@ -452,7 +452,7 @@ void Synapses::save_connectivity_as_txt(std::string path, std::string prefix, in
     if (synapsegroupid >= 0)
       preidfile << CORRECTED_PRESYNAPTIC_ID(presynaptic_neuron_indices[synapse_reversesort_indices[i]], presynaptic_group_is_input) - precorrection << std::endl;
     else 
-      preidfile << presynaptic_neuron_indices[synapse_reversesort_indices[i]];
+      preidfile << presynaptic_neuron_indices[synapse_reversesort_indices[i]]<<std::endl;;
     postidfile << postsynaptic_neuron_indices[synapse_reversesort_indices[i]] - postcorrection << std::endl;
     weightfile << synaptic_efficacies_or_weights[synapse_reversesort_indices[i]] << std::endl;
   }
