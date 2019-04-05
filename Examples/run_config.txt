@@ -1,0 +1,7 @@
+6       
+2      
+1     
+0.00002 
+Data/MatlabGaborFilter/   
+simpleShapes                    
+output/Start4End6.000000/synapse_dir/SynapticWeights.bin
