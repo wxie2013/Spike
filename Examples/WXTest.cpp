@@ -321,10 +321,6 @@ int main (int argc, char *argv[])
 
     model->AddPlasticityRule(evans_stdp);
 
-    //  needed here???  it's called when calling finalise_model
-    //model->init_backend();
-
-
     // ADD ANY ACTIVITY MONITORS OR PLASTICITY RULES YOU WISH FOR
     SpikingActivityMonitor* spike_monitor = new SpikingActivityMonitor(lif_spiking_neurons);
     SpikingActivityMonitor* input_spike_monitor = new SpikingActivityMonitor(input_neurons);
@@ -530,7 +526,6 @@ int main (int argc, char *argv[])
     if (starting_time != 0){
         load_weights(model, current_weight, true);
     }
-    model->finalise_model();
     model->run(simtime, plasticity_on);
 
     //use binary mode. The text mode is too slow ..
