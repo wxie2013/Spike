@@ -111,7 +111,7 @@ int main (int argc, char *argv[])
     //.. loading run configuation parameters ...
     //
     int starting_time = 0;  // if !=0, it's trained and just load the parameter and continue training. When train again, starting_time is the end of the last training time. 
-    float simtime = 2.0f;  //simulation time in seconds starting from the starting_time
+    float simtime = 2.0f;  //simulation time in seconds starting from the starting_time; Can be set higher than usual for any period for generally test the network behaviour.
     bool plasticity_on = false;  // turn on the plasticity or not
     float timestep = 0.00002;  // can set to any value for testing. set it to original_timestep when run 
 
@@ -165,16 +165,9 @@ int main (int argc, char *argv[])
     cout<<" current weight : "<<current_weight<<endl;
     cout<<" output location: "<<output_location<<endl;
     cout<<" -----------------------------------------------"<<endl;
-    //..
-    // The timestep at which this network is run is entered here.
-    // Note that the timestep can be set higher than usual for any period in which you want to generally test the network behaviour.
-    float original_timestep = 0.00002;      // This value is the timestep used in Aki's spiking investigations
 
-    // These flags set how the experiment shall be run
-    bool simulate_network_to_test_untrained = true;
-    bool simulate_network_to_train_network = true;
-    bool simulate_network_to_test_trained = true;
-    bool human_readable_storage = false;
+    //..
+    float original_timestep = 0.00002;      // This value is the timestep used in Aki's spiking investigations
 
     // Since the model can be run under different connectivity styles, these booleans turn them on/off
     bool E2E_FB_ON = true;
@@ -182,24 +175,13 @@ int main (int argc, char *argv[])
     bool E2E_L_STDP_ON = true;
 
     // In order to set up a sensible set of FF exc and inh values, a set of booleans have been set up to turn on/off the values
-    bool inh_layer_on[] = {true, true, true, true};
-
-    // Parameters for testing
-    const float presentation_time_per_stimulus_per_epoch_test = 2.0f; // seconds
-    bool record_spikes_test = true;
-    bool save_recorded_spikes_and_states_to_file_test = true;
-
-    // Parameters for training
-    float presentation_time_per_stimulus_per_epoch_train = 0.2f; // 4.0f didn't really work; //used to be 2.0//0.2;//2.0f; // seconds
-
+    bool inh_layer_on[] = {true, true, true, true};  //.. 4-layer network
 
     /*
      *
      *  Visual Model General Settings
      *
      */
-
-
     // Network Parameters
     const int number_of_layers = 4;  // This value is explicitly assumed in this model. Not recommended to change unless you understand what else may need changing in this file.
     int max_number_of_connections_per_pair = 2;  // The maximum number of connections refers to multiple synaptic contacts pre->post
@@ -209,18 +191,18 @@ int main (int argc, char *argv[])
     // Measure of the radius of the Fan-in
     // G2E = Gabor to excitatory, E2E = excitatory to excitatory, E2I = excitatory to inhibitory, I2E = inhibitory to excitatory
     // FF = feed forward, L = Lateral, FB = Feedback
-    float gaussian_synapses_standard_deviation_G2E_FF = 12.0;//1.0;//12.0;
-    float gaussian_synapses_standard_deviation_E2E_FF[number_of_layers-1] = {12.0,18.0,24.0};//{8.0,12.0,16.0};//{6.0,9.0,12.0};//{8.0,12.0,16.0};//{12.0,18.0,18.0};
-    float gaussian_synapses_standard_deviation_E2E_FB = 12.0;//8.0;
-    float gaussian_synapses_standard_deviation_E2E_L = 8.0;
+    float gaussian_synapses_standard_deviation_G2E_FF = 1.0;//12.0;//12.0;
+    float gaussian_synapses_standard_deviation_E2E_FF[number_of_layers-1] = {8.0,12.0,16.0};// {12.0,18.0,24.0};//{6.0,9.0,12.0};//{8.0,12.0,16.0};//{12.0,18.0,18.0};
+    float gaussian_synapses_standard_deviation_E2E_FB = 8.0;//12.0;
+    float gaussian_synapses_standard_deviation_E2E_L = 4.0;
     float gaussian_synapses_standard_deviation_E2I_L = 1.0;
     float gaussian_synapses_standard_deviation_I2E_L = 8.0;
 
     // Fan-in Number
     int fanInCount_G2E_FF = 30;
     int fanInCount_E2E_FF = 100;
-    int fanInCount_E2E_FB = 5;//10;//10;
-    int fanInCount_E2E_L = 30;
+    int fanInCount_E2E_FB = 10;//{0, 10] //means two scenarios, 0 or 10 
+    int fanInCount_E2E_L = 10; //{0, 10} //means two scenarios, 0 or 10 
     int fanInCount_E2I_L = 30;
     int fanInCount_I2E_L = 30;
 
@@ -232,7 +214,7 @@ int main (int argc, char *argv[])
     // Synaptic Parameters
     // Range of axonal transmission delay
     // timestep is defined above
-    float min_delay = 5.0*timestep; // In timesteps
+    float min_delay = 0.0001//5.0*timestep; // In timesteps
     float max_delay = 0.01; // In seconds (10ms)
     float max_FR_of_input_Gabor = 100.0f;
     float absolute_refractory_period = 0.002;
@@ -255,32 +237,33 @@ int main (int argc, char *argv[])
     float E2E_L_maxDelay = max_delay;
 
     // Below are the decay rates of the variables for learning: Pre/Post synaptic activities C and D (See Ben Evans)
-    float decay_term_tau_C = 0.005;//0.3(In Ben's model, tau_C/tau_D = 0.003/0.005 v 0.015/0.025 v 0.075/0.125, and the first one produces the best result)
+    // Aki's model tried 5, 25, 125 ms for both Tau_C and Tau_D. the shorter, the more PGs
+    float decay_term_tau_C = 0.003;//aki's model:0.005(In Ben's model, tau_C/tau_D = 0.003/0.005 v 0.015/0.025 v 0.075/0.125, and the first one produces the best result)
     float decay_term_tau_D = 0.005;
 
     // Biological Scaling Constant = How much you multiply the weights up or down for realism/stability
     // If this value is roughly on the order of the Leakage Conductance, it will be close to one input spike -> one output spike (n.b. depends on syn tau)
-    float biological_conductance_scaling_constant_lambda_G2E_FF = 0.1 * 0.0001 * original_timestep;
-    float biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep;
-    float biological_conductance_scaling_constant_lambda_E2E_FB = 0.1 * 0.0001 * original_timestep;
-    float biological_conductance_scaling_constant_lambda_E2E_L  = 0.000001 * original_timestep;
-    float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep;
-    float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep;
+    float biological_conductance_scaling_constant_lambda_G2E_FF = 0.1 * 0.0001 * original_timestep;  //..0.2ns
+    float biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep; // 1ns
+    float biological_conductance_scaling_constant_lambda_E2E_FB = 0.1 * 0.0001 * original_timestep; //0.2ns
+    float biological_conductance_scaling_constant_lambda_E2E_L  = 0.000001 * original_timestep; //0.02ns
+    float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; // 20ns
+    float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; // 100ns
 
-    // why re-adjust the scaling factor ??? 
+    // is the re-adjust the scaling factor come from optimization? 
     float layerwise_biological_conductance_scaling_constant_lambda_E2E_FF[number_of_layers-1] = {
         0.625f * biological_conductance_scaling_constant_lambda_E2E_FF,
         0.5f * biological_conductance_scaling_constant_lambda_E2E_FF,
         0.75f * biological_conductance_scaling_constant_lambda_E2E_FF};
 
-    // why re-adjust the scaling factor ??? 
+    // Aki's model fixed at 40ns for all layers. Use these values for now and change to 40ns if needed
     float layerwise_biological_conductance_scaling_constant_lambda_E2I_L[number_of_layers] = {
         1.1f * biological_conductance_scaling_constant_lambda_E2I_L,
         1.625f * biological_conductance_scaling_constant_lambda_E2I_L,
         0.875f * biological_conductance_scaling_constant_lambda_E2I_L,
         1.6f * biological_conductance_scaling_constant_lambda_E2I_L};
 
-    // why re-adjust the scaling factor ??? 
+    // Aki's model fixed at 80 ns. Use these values for now and change to 80ns if needed 
     float layerwise_biological_conductance_scaling_constant_lambda_I2E_L[number_of_layers] = {
         0.04f * biological_conductance_scaling_constant_lambda_I2E_L,
         0.375f * biological_conductance_scaling_constant_lambda_I2E_L,
@@ -295,7 +278,7 @@ int main (int argc, char *argv[])
     float decay_term_tau_g_E2E_FB = 0.15;
     float decay_term_tau_g_E2E_L = 0.15;//0.002 v. 0.15 and 0.15 is better?
     float decay_term_tau_g_E2I_L = 0.002;
-    float decay_term_tau_g_I2E_L = 0.025;//0.005;//In Ben's model, 0.005 v 0.025 and latter produced better result
+    float decay_term_tau_g_I2E_L = 0.025;//Aki's model 0.005;//In Ben's model, 0.005 v 0.025 and latter produced better result
 
 
     /*
@@ -376,7 +359,7 @@ int main (int argc, char *argv[])
     EXCITATORY_LIF_SPIKING_NEURON_GROUP_PARAMS->group_shape[1] = dim_excit_layer;
     EXCITATORY_LIF_SPIKING_NEURON_GROUP_PARAMS->resting_potential_v0 = -0.074f;
     EXCITATORY_LIF_SPIKING_NEURON_GROUP_PARAMS->threshold_for_action_potential_spike = -0.053f;
-    EXCITATORY_LIF_SPIKING_NEURON_GROUP_PARAMS->somatic_capacitance_Cm = 500.0*pow(10, -12);
+    EXCITATORY_LIF_SPIKING_NEURON_GROUP_PARAMS->somatic_capacitance_Cm = 500.0*pow(10, -12); // 500pF
     EXCITATORY_LIF_SPIKING_NEURON_GROUP_PARAMS->somatic_leakage_conductance_g0 = 25.0*pow(10, -9);
     EXCITATORY_LIF_SPIKING_NEURON_GROUP_PARAMS->absolute_refractory_period = absolute_refractory_period;
 
@@ -408,7 +391,7 @@ int main (int argc, char *argv[])
     conductance_spiking_synapse_parameters_struct * G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS = new conductance_spiking_synapse_parameters_struct();
     G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[0] = timestep; //???
     G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[1] = timestep;
-    G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1;
+    G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; //??? set to 1.  later when forming layers, it AddSynapseGroup twice. Why not just set it to 2 here? 
     G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_per_postsynaptic_neuron = fanInCount_G2E_FF;
     //from Brunel10K.cpp,  Biological Scaling factors (ensures that voltage is in mV)
     G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = biological_conductance_scaling_constant_lambda_G2E_FF;
@@ -425,7 +408,7 @@ int main (int argc, char *argv[])
     conductance_spiking_synapse_parameters_struct * E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS = new conductance_spiking_synapse_parameters_struct();
     E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[0] = E2E_FF_minDelay;//5.0*timestep;
     E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[1] = E2E_FF_maxDelay;//3.0f*pow(10, -3);
-    E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = max_number_of_connections_per_pair;
+    E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1;
     E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_per_postsynaptic_neuron = fanInCount_E2E_FF;
     if (fanInCount_E2E_FF%max_number_of_connections_per_pair!=0)
     {
@@ -436,7 +419,7 @@ int main (int argc, char *argv[])
     E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = biological_conductance_scaling_constant_lambda_E2E_FF;
     E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->connectivity_type = CONNECTIVITY_TYPE_GAUSSIAN_SAMPLE;
     E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->plasticity_vec.push_back(evans_stdp);
-    // ??? why this is commented out?
+    // this line is assigned later when assemble layers since each later the value is different
     //E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_standard_deviation = gaussian_synapses_standard_deviation_E2E_FF[0];
     E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->reversal_potential_Vhat = 0.0;
     E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->decay_term_tau_g = decay_term_tau_g_E2E_FF;
@@ -448,7 +431,7 @@ int main (int argc, char *argv[])
     if(E2E_FB_ON){
         E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[0] = E2E_FB_minDelay;
         E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[1] = E2E_FB_maxDelay;
-        E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; //.. 2 ??? 
+        E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; 
         E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_per_postsynaptic_neuron = fanInCount_E2E_FB;
 
         E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = biological_conductance_scaling_constant_lambda_E2E_FB;
@@ -466,12 +449,12 @@ int main (int argc, char *argv[])
     conductance_spiking_synapse_parameters_struct * E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS = new conductance_spiking_synapse_parameters_struct();
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[0] = E2I_L_minDelay; //5.0*timestep;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[1] = E2I_L_maxDelay; //3.0f*pow(10, -3);
-    E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; //.. 2 ???
+    E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; 
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_per_postsynaptic_neuron = fanInCount_E2I_L;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = biological_conductance_scaling_constant_lambda_E2I_L;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->connectivity_type = CONNECTIVITY_TYPE_GAUSSIAN_SAMPLE;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_standard_deviation = gaussian_synapses_standard_deviation_E2I_L;
-    E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->reversal_potential_Vhat = 0.0;
+    E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->reversal_potential_Vhat = 0.0;  //??? should this be -70mv
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->decay_term_tau_g = decay_term_tau_g_E2I_L;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_range[0] = 0.5;//weight_range_bottom;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_range[1] = 0.5;//weight_range_top;
@@ -480,7 +463,7 @@ int main (int argc, char *argv[])
     conductance_spiking_synapse_parameters_struct * I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS = new conductance_spiking_synapse_parameters_struct();
     I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[0] = I2E_L_minDelay;//5.0*timestep;
     I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[1] = I2E_L_maxDelay;//3.0f*pow(10, -3);
-    I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; //.. 2 ???
+    I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; 
     I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_per_postsynaptic_neuron = fanInCount_I2E_L;
     I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = biological_conductance_scaling_constant_lambda_I2E_L;
     I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->connectivity_type = CONNECTIVITY_TYPE_GAUSSIAN_SAMPLE;
@@ -494,7 +477,7 @@ int main (int argc, char *argv[])
     if(E2E_L_ON){
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[0] = E2E_L_minDelay;
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[1] = E2E_L_maxDelay;
-        E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; //.. 2 ???
+        E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; 
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_per_postsynaptic_neuron = fanInCount_E2E_L;
 
         E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = biological_conductance_scaling_constant_lambda_E2E_L;
@@ -519,7 +502,7 @@ int main (int argc, char *argv[])
                 model->AddSynapseGroup(EXCITATORY_NEURONS[l-1], EXCITATORY_NEURONS[l], E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS);
             }
 
-            if(E2E_FB_ON)
+            if(E2E_FB_ON)  // FF has 2 connect pre-post. why FB does not have ???
                 model->AddSynapseGroup(EXCITATORY_NEURONS[l], EXCITATORY_NEURONS[l-1], E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS);
         }
 
