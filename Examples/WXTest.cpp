@@ -214,7 +214,7 @@ int main (int argc, char *argv[])
     // Synaptic Parameters
     // Range of axonal transmission delay
     // timestep is defined above
-    float min_delay = 0.0001//5.0*timestep; // In timesteps
+    float min_delay = 0.0001; //5.0*timestep; // In timesteps
     float max_delay = 0.01; // In seconds (10ms)
     float max_FR_of_input_Gabor = 100.0f;
     float absolute_refractory_period = 0.002;
@@ -529,7 +529,11 @@ int main (int argc, char *argv[])
     model->run(simtime, plasticity_on);
 
     //use binary mode. The text mode is too slow ..
+    //spike_monitor->save_spikes_as_txt("./");
+    //input_spike_monitor->save_spikes_as_txt("./");
+    //model->spiking_synapses->save_connectivity_as_txt("./");
     spike_monitor->save_spikes_as_binary(neuron_dir);
     input_spike_monitor->save_spikes_as_binary(input_dir);
     model->spiking_synapses->save_connectivity_as_binary(synapse_dir);
+
 }
