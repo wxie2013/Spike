@@ -13,6 +13,7 @@ using namespace std;
 
 /** Function to load weights from a file into a SpikingModel.
   save time. No need to run the model again
+  note: model->spiking_synapses->load_weights_from_binary(current_weight);  does not work.
  */
 void load_weights(
         SpikingModel* Model,      /**< SpikingModel Pointer to the model which should load weights */
@@ -110,7 +111,7 @@ int main (int argc, char *argv[])
 
     //.. loading run configuation parameters ...
     //
-    int starting_time = 0;  // if !=0, it's trained and just load the parameter and continue training. When train again, starting_time is the end of the last training time. 
+    float starting_time = 0;  // if !=0, it's trained and just load the parameter and continue training. When train again, starting_time is the end of the last training time. 
     float simtime = 2.0f;  //simulation time in seconds starting from the starting_time; Can be set higher than usual for any period for generally test the network behaviour.
     bool plasticity_on = false;  // turn on the plasticity or not
     float timestep = 0.00002;  // can set to any value for testing. set it to original_timestep when run 
@@ -142,6 +143,8 @@ int main (int argc, char *argv[])
     string neuron_dir  = output_location + "neuron_dir/";
     string input_dir  = output_location + "input_dir/";
     string synapse_dir  = output_location + "synapse_dir/";
+
+    cout<<starting_time<<" "<<to_string(starting_time)<<endl;
 
     if( mkdir(output_location.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
         mkdir(neuron_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
@@ -529,11 +532,10 @@ int main (int argc, char *argv[])
     model->run(simtime, plasticity_on);
 
     //use binary mode. The text mode is too slow ..
-    //spike_monitor->save_spikes_as_txt("./");
-    //input_spike_monitor->save_spikes_as_txt("./");
-    //model->spiking_synapses->save_connectivity_as_txt("./");
+    spike_monitor->save_spikes_as_txt("./");
+    input_spike_monitor->save_spikes_as_txt("./");
+    model->spiking_synapses->save_connectivity_as_txt("./");
     spike_monitor->save_spikes_as_binary(neuron_dir);
     input_spike_monitor->save_spikes_as_binary(input_dir);
     model->spiking_synapses->save_connectivity_as_binary(synapse_dir);
-
 }
