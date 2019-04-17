@@ -1,46 +1,50 @@
-#include <iostream>
-#include <map>
-#include <string>
-#include <iterator>
-#include <fstream>
+#include "production.h"
 
-using namespace std;
-
-struct Synapse {
-  int post_ID;
-  float weight;
-  int delay; // in time_step
-};
-
-void production(string dir)
+production::production(string dir)
 {
-    string neuron_dir = dir+"/neuron_dir/";
-    string input_dir = dir+"/input_dir/";
-    string synapse_dir = dir+"/synapse_dir/";
+    neuron_dir = dir+"/neuron_dir/";
+    input_dir = dir+"/input_dir/";
+    synapse_dir = dir+"/synapse_dir/";
 
     //.. input neurons ....
-    string in_SpikeTimes_file = input_dir+"SpikeTimes.bin";
-    string in_SpikeIDs_file = input_dir+"SpikeIDs.bin";
-    ifstream in_SpikeTimes(in_SpikeTimes_file, ios::in | ios::binary);
-    ifstream in_SpikeIDs(in_SpikeIDs_file, ios::in | ios::binary);
+    in_SpikeTimes_file = input_dir+"SpikeTimes.bin";
+    in_SpikeIDs_file = input_dir+"SpikeIDs.bin";
+
+    in_SpikeTimes.open(in_SpikeTimes_file, ios::in | ios::binary);
+    in_SpikeIDs.open(in_SpikeIDs_file, ios::in | ios::binary);
 
     //.. layer 1 and above 
-    string SpikeTimes_file = neuron_dir+"SpikeTimes.bin";
-    string SpikeIDs_file = neuron_dir+"SpikeIDs.bin";
-    ifstream SpikeTimes(SpikeTimes_file, ios::in | ios::binary);
-    ifstream SpikeIDs(SpikeIDs_file, ios::in | ios::binary);
+    SpikeTimes_file = neuron_dir+"SpikeTimes.bin";
+    SpikeIDs_file = neuron_dir+"SpikeIDs.bin";
+
+    SpikeTimes.open(SpikeTimes_file, ios::in | ios::binary);
+    SpikeIDs.open(SpikeIDs_file, ios::in | ios::binary);
 
     //.. synapses 
-    string SynapticWeights_file = synapse_dir+"SynapticWeights.bin";
-    string SynapticDelays_file = synapse_dir+"SynapticDelays.bin";
-    string PresynapticIDs_file = synapse_dir+"PresynapticIDs.bin";
-    string PostsynapticIDs_file = synapse_dir+"PostsynapticIDs.bin";
+    SynapticWeights_file = synapse_dir+"SynapticWeights.bin";
+    SynapticDelays_file = synapse_dir+"SynapticDelays.bin";
+    PresynapticIDs_file = synapse_dir+"PresynapticIDs.bin";
+    PostsynapticIDs_file = synapse_dir+"PostsynapticIDs.bin";
 
-    ifstream SynapticWeights(SynapticWeights_file, ios::in | ios::binary);
-    ifstream SynapticDelays(SynapticDelays_file, ios::in | ios::binary);
-    ifstream PresynapticIDs(PresynapticIDs_file, ios::in | ios::binary);
-    ifstream PostsynapticIDs(PostsynapticIDs_file, ios::in | ios::binary);
+    SynapticWeights.open(SynapticWeights_file, ios::in | ios::binary);
+    SynapticDelays.open(SynapticDelays_file, ios::in | ios::binary);
+    PresynapticIDs.open(PresynapticIDs_file, ios::in | ios::binary);
+    PostsynapticIDs.open(PostsynapticIDs_file, ios::in | ios::binary);
 
+    //..
+    if(!in_SpikeTimes.good() || !in_SpikeIDs.good() || !SpikeTimes.good() || !SpikeIDs.good() ||
+       !SynapticWeights.good() || !SynapticDelays.good() || !PresynapticIDs.good() || !PostsynapticIDs.good()) {
+        cout<<" !!!! one of the input binary data file does not exist,  exit !!!!"<<endl;
+        exit(0);
+    }
+}
+//__
+production::~production()
+{
+}
+//__
+void production::read_data()
+{
     //..
     float in_spkT, spkT, weight;
     int in_spkID, spkID, delay, pre_ID, post_ID;
