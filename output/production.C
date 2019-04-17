@@ -1,8 +1,17 @@
-//note: SpikeID: int
-// SpikeTime: float
-// delay: int
-//: pre and post ID: int
-//.. weight: float
+#include <iostream>
+#include <map>
+#include <string>
+#include <iterator>
+#include <fstream>
+
+using namespace std;
+
+struct Synapse {
+  int post_ID;
+  float weight;
+  int delay; // in time_step
+};
+
 void production(string dir)
 {
     string neuron_dir = dir+"/neuron_dir/";
@@ -36,8 +45,8 @@ void production(string dir)
     float in_spkT, spkT, weight;
     int in_spkID, spkID, delay, pre_ID, post_ID;
 
-    //..
-    TNtuple* in_nt = new TNtuple("in_nt", "", "id:t");
+    //.. map input neuron spike time and ID
+    multimap<int, float> map_in_spk_ID_T;
     while (in_SpikeTimes.good()) {
         in_SpikeTimes.read((char*)&in_spkT, sizeof(float));
         in_SpikeIDs.read((char*)&in_spkID, sizeof(int));
@@ -47,12 +56,13 @@ void production(string dir)
             in_SpikeIDs.close();
             break;
         }
-        in_nt->Fill(in_spkID, in_spkT);
+        map_in_spk_ID_T.insert(make_pair(-in_spkID, in_spkT)); //.. "-" because in synapses collection, input neuron ID is labelled as negative
     }
+    cout<<" --input spike neuron size: "<<map_in_spk_ID_T.size()<<endl;
 
-    //..
-    TNtuple* nt = new TNtuple("nt", "", "id:t");
 
+    //.. map other neuron spike time and ID
+    multimap<int, float> map_spk_ID_T;
     while (SpikeTimes.good()) {
         SpikeTimes.read((char*)&spkT, sizeof(float));
         SpikeIDs.read((char*)&spkID, sizeof(int));
@@ -62,12 +72,13 @@ void production(string dir)
             SpikeIDs.close();
             break;
         }
-        nt->Fill(spkID, spkT);
+        map_spk_ID_T.insert(make_pair(spkID, spkT));
     }
+    cout<<" --spike neuron size: "<<map_spk_ID_T.size()<<endl;
 
-    //..
-    TNtuple* synapse = new TNtuple("synapse", "", "preid:postid:w:delay");
-
+    //.. map pre_ID with other information of a synapses 
+    Synapse synapse_infor;
+    multimap<int, Synapse> map_Synapse;
     while (SynapticWeights.good()) {
         SynapticWeights.read((char*)&weight, sizeof(float));
         SynapticDelays.read((char*)&delay, sizeof(int));
@@ -81,6 +92,11 @@ void production(string dir)
             PostsynapticIDs.close();
             break;
         }
-        synapse->Fill(pre_ID, post_ID, weight, delay);
+        synapse_infor.post_ID = post_ID;
+        synapse_infor.weight = weight;
+        synapse_infor.delay = delay;
+
+        map_Synapse.insert(make_pair(pre_ID, synapse_infor));
     }
+    cout<<" --synapses size: "<<map_Synapse.size()<<endl;
 }
