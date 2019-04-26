@@ -237,14 +237,25 @@ int Synapses::AddGroup(int presynaptic_group_id,
             int number_of_postsynaptic_neurons_in_group = postend - poststart;
             int total_number_of_unique_synapses = number_of_new_synapses_per_postsynaptic_neuron * number_of_postsynaptic_neurons_in_group;
             Synapses::increment_number_of_synapses(total_number_of_unique_synapses*max_number_of_connections_per_pair);
+
+            std::default_random_engine generator; //.. need to be before the loop
+            int last_post_id = -1; //.. input neuron can not be a post_id, assign -1 as the initial value
+            std::vector<std::pair<int, int>> preid_of_a_postid;
+            std::pair<std::vector<std::pair<int, int>>::iterator,std::vector<std::pair<int, int>>::iterator> range;
+
             for (int i=0; i < total_number_of_unique_synapses;i++){
               int postid = i / number_of_new_synapses_per_postsynaptic_neuron;
+
+              if(postid != last_post_id) {
+                  preid_of_a_postid.clear();  // reset for each different post_id
+                  last_post_id = postid;
+              }
+
               float post_fractional_centre_x = ((float)(postid % postsynaptic_group_shape[0]) / (float)postsynaptic_group_shape[0]);
               float post_fractional_centre_y = ((float)((float)postid / (float)postsynaptic_group_shape[1]) / (float)postsynaptic_group_shape[1]);
               int pre_centre_x = presynaptic_group_shape[0] * post_fractional_centre_x;
               int pre_centre_y = presynaptic_group_shape[1] * post_fractional_centre_y;
 
-              std::default_random_engine generator;
               std::normal_distribution<float> pre_distribution_x((float)pre_centre_x, standard_deviation_sigma); 
               std::normal_distribution<float> pre_distribution_y((float)pre_centre_y, standard_deviation_sigma); 
 
@@ -255,9 +266,38 @@ int Synapses::AddGroup(int presynaptic_group_id,
               while ((pre_y < 0) || (pre_y >= presynaptic_group_shape[1]))
                   pre_y = (int)round(pre_distribution_y(generator));
              
+              //.. find the duplicated pre_x and pre_y
+              std::sort (preid_of_a_postid.begin(), preid_of_a_postid.end());
+              range = std::equal_range(preid_of_a_postid.begin(), preid_of_a_postid.end(), std::make_pair(pre_x, pre_y));
+
+              int num_of_pre_of_the_post = range.second - range.first;
+
+              //std::cout<<"=== id: "<<poststart + postid<<"i: "<<i<<" postid: "<<postid<<" pre_x: "<<pre_x<<" pre_y: "<<pre_y<<" num_of_pre_of_the_post: "<<num_of_pre_of_the_post<<std::endl;
+
+
+              int ii = 0;
+              while(num_of_pre_of_the_post >= 1) {// each pre_id need to be unique. The number of synapses is assigned twice below if max_number_of_connections_per_pair==2
+                  pre_x = (int)round(pre_distribution_x(generator));
+                  while ((pre_x < 0) || (pre_x >= presynaptic_group_shape[0]))
+                      pre_x = (int)(pre_distribution_x(generator));
+                  pre_y = (int)(pre_distribution_y(generator));
+                  while ((pre_y < 0) || (pre_y >= presynaptic_group_shape[1]))
+                      pre_y = (int)round(pre_distribution_y(generator));
+
+                  range = std::equal_range(preid_of_a_postid.begin(), preid_of_a_postid.end(), std::make_pair(pre_x, pre_y));
+                  num_of_pre_of_the_post = range.second - range.first;
+                  //std::cout<<"    num_of_pre_of_the_post: "<<num_of_pre_of_the_post<<" pre_x: "<<pre_x<<" pre_y: "<<pre_y<<std::endl;
+                  ii++;
+              }
+              preid_of_a_postid.push_back(std::make_pair(pre_x, pre_y));
+
+              //std::cout<<"    sampled: "<<ii<<std::endl;
+
+              //..
               for (int n=0; n < max_number_of_connections_per_pair; n++){ 
                 postsynaptic_neuron_indices[original_number_of_synapses + i + n*total_number_of_unique_synapses] = poststart + postid;
                 presynaptic_neuron_indices[original_number_of_synapses + i + n*total_number_of_unique_synapses] = CORRECTED_PRESYNAPTIC_ID(prestart + pre_x + presynaptic_group_shape[1] * pre_y, presynaptic_group_is_input);
+               // std::cout<<postsynaptic_neuron_indices[original_number_of_synapses + i + n*total_number_of_unique_synapses]<<" "<< presynaptic_neuron_indices[original_number_of_synapses + i + n*total_number_of_unique_synapses]<<std::endl;
               }
             }
 
