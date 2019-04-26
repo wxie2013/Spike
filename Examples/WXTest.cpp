@@ -533,9 +533,10 @@ int main (int argc, char *argv[])
     model->run(simtime, plasticity_on);
 
     //use binary mode. The text mode is too slow ..
-    spike_monitor->save_spikes_as_txt("./");
-    input_spike_monitor->save_spikes_as_txt("./");
-    model->spiking_synapses->save_connectivity_as_txt("./");
+    //spike_monitor->save_spikes_as_txt(neuron_dir);
+    //input_spike_monitor->save_spikes_as_txt(input_dir);
+    //model->spiking_synapses->save_connectivity_as_txt(synapse_dir);
+
     spike_monitor->save_spikes_as_binary(neuron_dir);
     input_spike_monitor->save_spikes_as_binary(input_dir);
     model->spiking_synapses->save_connectivity_as_binary(synapse_dir);
