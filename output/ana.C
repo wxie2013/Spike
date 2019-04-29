@@ -3,6 +3,7 @@
 void ana(string dir="")
 {
     production pd(dir);
-    pd.read_data();
+    pd.read_binary_data();
+    pd.find_PG();
 }
 

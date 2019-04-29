@@ -137,16 +137,22 @@ void production::find_all_afferent_neuron_for_a_neuron()
 
         id.clear(); //.. clear before handling each neuron
 
-        range = map_Synapse.equal_range(neuron_with_synapses[i]); //.. all afferent neuron of a post synaptic neuron
+        range = map_Synapse.equal_range(neuron_with_synapses[i]); //.. all afferent neuron of a post synaptic neuron. The map is sorted already
+
         for(multimap<int, Synapse>::iterator it = range.first; it!=range.second; it++) {
             id.push_back(it->second.pre_ID);
         }
         neuton_with_all_afferent.insert(make_pair(neuron_with_synapses[i], id));
-    }
 
-    //__
-    for(map<int, vector<int>>::iterator it = neuton_with_all_afferent.begin(); it!=neuton_with_all_afferent.end(); it++) {
-        cout<<it->first<<" "<<it->second.size()<<endl;
+        //.. find duplicated key-value pairs
+        std::pair<std::vector<int>::iterator,std::vector<int>::iterator> bounds;
+        vector<int> nid = id;
+        sort(nid.begin(), nid.end());
+        for(unsigned int j = 0; j<nid.size(); j++) {
+            bounds=std::equal_range (nid.begin(), nid.end(), nid[j]);
+            if((bounds.second - bounds.first) >=2) 
+                cout<<neuron_with_synapses[i]<<" "<<nid[j]<<endl;
+        }
     }
 
 }
