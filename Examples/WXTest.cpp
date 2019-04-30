@@ -340,7 +340,7 @@ int main (int argc, char *argv[])
     TimerWithMessages * adding_input_neurons_timer = new TimerWithMessages("Adding Input Neurons...\n");
 
     // GaborFilter result: Need to include this into a this code
-    input_neurons->set_up_rates("FileList.txt", "FilterParameters.txt", ("../../Data/MatlabGaborFilter/"+inputs_for_test_name+"/").c_str(), max_FR_of_input_Gabor);
+    input_neurons->set_up_rates("FileList.txt", "FilterParameters.txt", (filepath + inputs_for_test_name+"/").c_str(), max_FR_of_input_Gabor);
     equalize_rates(input_neurons, 0.1f);
 
     image_poisson_input_spiking_neuron_parameters_struct * image_poisson_input_spiking_group_params = new image_poisson_input_spiking_neuron_parameters_struct();
