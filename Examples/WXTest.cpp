@@ -117,11 +117,11 @@ int main (int argc, char *argv[])
     float timestep = 0.00002;  // can set to any value for testing. set it to original_timestep when run 
 
     // Files/Paths relevent to the input set
-    string source = "/home/wxie/AI/Spike/master/Spike/";
-    string filepath = source + "Data/MatlabGaborFilter/";
-    string inputs_for_test_name = "simpleShapes";
+    string source = "";
+    string filepath = "";
+    string inputs_for_test_name = "";
     string current_weight= "";  //since default it no training yet, there's no current weight location
-    
+
     ifstream configFile;
     configFile.open ("run_config.txt", ifstream::in);
     if(!configFile.good()) {
@@ -131,13 +131,13 @@ int main (int argc, char *argv[])
         configFile >> simtime;
         configFile >> plasticity_on;
         configFile >> timestep;
+        configFile >> source;
         configFile >> filepath;
         configFile >> inputs_for_test_name;
         configFile >> current_weight;
     }
 
     // output file location ...
-    filepath = source + filepath;
     current_weight = source + current_weight;
     string output_location = source + "output/Start"+to_string(starting_time)+"End"+to_string(starting_time+simtime)+"/";
     string neuron_dir  = output_location + "neuron_dir/";
@@ -164,7 +164,7 @@ int main (int argc, char *argv[])
     cout<<" new_sim_time: "<<simtime<<endl;
     cout<<" plasticity_on: "<<plasticity_on<<endl;
     cout<<" timestep: "<<timestep<<endl;
-    cout<<" input file: "<<filepath + inputs_for_test_name <<endl;
+    cout<<" input file: "<<source + filepath + inputs_for_test_name <<endl;
     cout<<" current weight : "<<current_weight<<endl;
     cout<<" output location: "<<output_location<<endl;
     cout<<" -----------------------------------------------"<<endl;
@@ -340,7 +340,7 @@ int main (int argc, char *argv[])
     TimerWithMessages * adding_input_neurons_timer = new TimerWithMessages("Adding Input Neurons...\n");
 
     // GaborFilter result: Need to include this into a this code
-    input_neurons->set_up_rates("FileList.txt", "FilterParameters.txt", (filepath + inputs_for_test_name+"/").c_str(), max_FR_of_input_Gabor);
+    input_neurons->set_up_rates("FileList.txt", "FilterParameters.txt", (source + filepath + inputs_for_test_name).c_str(), max_FR_of_input_Gabor);
     equalize_rates(input_neurons, 0.1f);
 
     image_poisson_input_spiking_neuron_parameters_struct * image_poisson_input_spiking_group_params = new image_poisson_input_spiking_neuron_parameters_struct();
