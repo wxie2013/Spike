@@ -18,44 +18,25 @@ using namespace std;
 void load_weights(
         SpikingModel* Model,      /**< SpikingModel Pointer to the model which should load weights */
         std::string weightloc,    /**< String path to the file from which weights should be loaded */
-        bool binaryfile)      /**< Boolean flag indicating if the file is a binary file */
+        )      /**< Boolean flag indicating if the file is a binary file */
 {
     std::ifstream weightfile;
     std::vector<float> WeightsToLoad; // This vector should ultimately hold the list of replacement weights
 
-    if (binaryfile){
-        weightfile.open (weightloc, ios::in | ios::binary);
-        if(!weightfile.good()) {
-            cout<<" !!! Current weight file: "<< weightloc << "does not exist,  exit !!!"<<endl;
-            exit(0);
+    weightfile.open (weightloc, ios::in | ios::binary);
+    if(!weightfile.good()) {
+        cout<<" !!! Current weight file: "<< weightloc << "does not exist,  exit !!!"<<endl;
+        exit(0);
+    }
+    while( weightfile.good() )
+    {
+        float currentweight;
+        weightfile.read((char*)&currentweight, sizeof(float));
+        if (weightfile.eof()) {
+            weightfile.close();
+            break;
         }
-        while( weightfile.good() )
-        {
-            float currentweight;
-            weightfile.read((char*)&currentweight, sizeof(float));
-            if (weightfile.eof()) {
-                weightfile.close();
-                break;
-            }
-            WeightsToLoad.push_back(currentweight);
-        }
-    } else {
-        weightfile.open(weightloc);
-        if(!weightfile.good()) {
-            cout<<" !!! Current weight file: "<< weightloc << " does not exist,  exit !!!"<<endl;
-            exit(0);
-        }
-        while( weightfile.good() )
-        {
-            string fileline;
-            getline( weightfile, fileline);
-            if (weightfile.eof()) {
-                weightfile.close();
-                break;
-            }
-            // Put each line into the float vector
-            WeightsToLoad.push_back( std::stof(fileline) );
-        }
+        WeightsToLoad.push_back(currentweight);
     }
     // Check if you have the correct number of weights
     if (WeightsToLoad.size() != Model->spiking_synapses->total_number_of_synapses){
@@ -535,7 +516,7 @@ int main (int argc, char *argv[])
 
     // if it's already trained, load any weights before finalising the model
     if (starting_time != 0){
-        load_weights(model, current_weight, true);
+        load_weights(model, current_weight);
     }
     model->run(simtime, plasticity_on);
 
