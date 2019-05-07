@@ -1,3 +1,8 @@
+#include <fstream>
+#include <iostream>
+#include "TNtuple.h"
+using namespace std;
+
 void plot(string dir)
 {
     string neuron_dir = dir+"/neuron_dir/";
@@ -32,6 +37,7 @@ void plot(string dir)
     int in_spkID, spkID, delay, pre_ID, post_ID;
 
     //..
+    cout<<" .. input neurons .."<<endl;
     TNtuple* in_nt = new TNtuple("in_nt", "", "id:t");
     while (in_SpikeTimes.good()) {
         in_SpikeTimes.read((char*)&in_spkT, sizeof(float));
@@ -46,6 +52,7 @@ void plot(string dir)
     }
 
     //..
+    cout<<" .. neurons .."<<endl;
     TNtuple* nt = new TNtuple("nt", "", "id:t");
 
     while (SpikeTimes.good()) {
@@ -61,6 +68,7 @@ void plot(string dir)
     }
 
     //..
+    cout<<" .. synapses ..."<<endl;
     TNtuple* synapse = new TNtuple("synapse", "", "preid:postid:w:delay");
 
     while (SynapticWeights.good()) {
