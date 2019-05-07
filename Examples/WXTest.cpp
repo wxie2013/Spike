@@ -17,7 +17,7 @@ using namespace std;
  */
 void load_weights(
         SpikingModel* Model,      /**< SpikingModel Pointer to the model which should load weights */
-        std::string weightloc,    /**< String path to the file from which weights should be loaded */
+        std::string weightloc    /**< String path to the file from which weights should be loaded */
         )      /**< Boolean flag indicating if the file is a binary file */
 {
     std::ifstream weightfile;
