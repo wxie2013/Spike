@@ -246,12 +246,19 @@ int main (int argc, char *argv[])
 
     // Biological Scaling Constant = How much you multiply the weights up or down for realism/stability
     // If this value is roughly on the order of the Leakage Conductance, it will be close to one input spike -> one output spike (n.b. depends on syn tau)
-    float biological_conductance_scaling_constant_lambda_G2E_FF = 0.1 * 0.0001 * original_timestep;  //..0.2ns
-    float biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep; // 1ns
-    float biological_conductance_scaling_constant_lambda_E2E_FB = 0.1 * 0.0001 * original_timestep; //0.2ns
-    float biological_conductance_scaling_constant_lambda_E2E_L  = 0.000001 * original_timestep; //0.02ns
-    float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; // 20ns
-    float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; // 100ns
+    //float biological_conductance_scaling_constant_lambda_G2E_FF = 0.1 * 0.0001 * original_timestep;  //..0.2ns
+    //float biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep; // 1ns
+    //float biological_conductance_scaling_constant_lambda_E2E_FB = 0.1 * 0.0001 * original_timestep; //0.2ns
+    //float biological_conductance_scaling_constant_lambda_E2E_L  = 0.000001 * original_timestep; //0.02ns
+    //float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; // 20ns
+    //float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; // 100ns
+
+    float biological_conductance_scaling_constant_lambda_G2E_FF = 0.0001;
+    float biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005;
+    float biological_conductance_scaling_constant_lambda_E2E_FB = 0.0001;
+    float biological_conductance_scaling_constant_lambda_E2E_L  = 0.0001;
+    float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001;
+    float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005;
 
     // is the re-adjust the scaling factor come from optimization? 
     float layerwise_biological_conductance_scaling_constant_lambda_E2E_FF[number_of_layers-1] = {
