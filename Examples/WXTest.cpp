@@ -196,10 +196,10 @@ int main (int argc, char *argv[])
     }
 
     // Synaptic Parameters
-    // Range of axonal transmission delay
+    // Range of axonal transmission delay (0.1 ms - 10 ms)
     // timestep is defined above
-    float min_delay = 0.0001; //5.0*timestep; // In timesteps
-    float max_delay = 0.01; // In seconds (10ms)
+    float min_delay = 0.0001; //0.1 ms
+    float max_delay = 0.01; // 10ms
     float max_FR_of_input_Gabor = 100.0f;
     float absolute_refractory_period = 0.002;
 
@@ -234,12 +234,13 @@ int main (int argc, char *argv[])
     //float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; // 20ns
     //float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; // 100ns
 
-    float biological_conductance_scaling_constant_lambda_G2E_FF = 0.0001;
-    float biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005;
-    float biological_conductance_scaling_constant_lambda_E2E_FB = 0.0001;
-    float biological_conductance_scaling_constant_lambda_E2E_L  = 0.0001;
-    float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001;
-    float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005;
+    float biological_conductance_scaling_constant_lambda_G2E_FF = 0.2 * 0.0001 * original_timestep; //. below 0.3ns, no spiking. set to 0.4ns 
+    float biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep; 
+    float biological_conductance_scaling_constant_lambda_E2E_FB = 0.0001 * original_timestep; 
+    float biological_conductance_scaling_constant_lambda_E2E_L  = 0.000001 * original_timestep; 
+    float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; 
+    float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; 
+
 
     // is the re-adjust the scaling factor come from optimization? 
     float layerwise_biological_conductance_scaling_constant_lambda_E2E_FF[number_of_layers-1] = {
@@ -307,8 +308,6 @@ int main (int argc, char *argv[])
     STDP_PARAMS->learning_rate_rho = learning_rate_rho;
 
     EvansSTDPPlasticity* evans_stdp = new EvansSTDPPlasticity(conductance_spiking_synapses, lif_spiking_neurons, input_neurons, STDP_PARAMS);
-    // shall I use this one? 
-    //WeightNormSTDPPlasticity * evans_stdp = new WeightNormSTDPPlasticity((SpikingSynapses *) conductance_spiking_synapses, (SpikingNeurons *) lif_spiking_neurons, (SpikingNeurons *) input_neurons, (stdp_plasticity_parameters_struct *) STDP_PARAMS); // the paper used weight normalized rule (???)
 
     model->AddPlasticityRule(evans_stdp);
 
@@ -376,7 +375,7 @@ int main (int argc, char *argv[])
     TimerWithMessages * adding_synapses_timer = new TimerWithMessages("Adding Synapses...\n");
 
     conductance_spiking_synapse_parameters_struct * G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS = new conductance_spiking_synapse_parameters_struct();
-    G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[0] = timestep; //???
+    G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[0] = timestep; 
     G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->delay_range[1] = timestep;
     G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->max_number_of_connections_per_pair = 1; //??? set to 1.  later when forming layers, it AddSynapseGroup twice. Why not just set it to 2 here? 
     G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_per_postsynaptic_neuron = fanInCount_G2E_FF;
@@ -441,7 +440,7 @@ int main (int argc, char *argv[])
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = biological_conductance_scaling_constant_lambda_E2I_L;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->connectivity_type = CONNECTIVITY_TYPE_GAUSSIAN_SAMPLE;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_standard_deviation = gaussian_synapses_standard_deviation_E2I_L;
-    E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->reversal_potential_Vhat = 0.0;  //??? should this be -70mv
+    E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->reversal_potential_Vhat = 0.0;  
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->decay_term_tau_g = decay_term_tau_g_E2I_L;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_range[0] = 0.5;//weight_range_bottom;
     E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_range[1] = 0.5;//weight_range_top;
