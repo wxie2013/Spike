@@ -6,6 +6,10 @@
 #include <iterator>
 #include <fstream>
 
+//
+#include "TFile.h"
+#include "TNtuple.h"
+
 using namespace std;
 
 struct Synapse {
@@ -16,8 +20,8 @@ struct Synapse {
 
 class production
 {
-    private:
-        //.. binary output from spike
+    private: //.. binary output from spike
+
         string neuron_dir;
         string input_dir;
         string synapse_dir;
@@ -55,22 +59,31 @@ class production
 
     private: //.. for Polychronous groups
         int num_PG;  //.. number of polychronous group
+        int max_number_of_connections_per_pair; //.. max number of synapses per pair 
         int min_num_afferent_per_neuron; //.. minimum number of afferent neuron per neuron. ??? not sure yet if 1->1 is OK for PG
         vector<int> neuron_with_synapses; //.. ID of neurons with any number of synapses
-        map<int, vector<int>> neuton_with_all_afferent; //.. map each neuron with all of its afferent neurons
+        map<int, vector<int>> neuron_with_all_afferent; //.. map each neuron with all of its afferent neurons
 
         void find_neuron_with_synapses();
+        vector<int> get_neuron_with_synapses() {return neuron_with_synapses;}
         void find_all_afferent_neuron_for_a_neuron();
 
     public:
-        production(string dir);
+        production();
         ~production();
 
-        void read_binary_data();  //.. read binary data produced directly from spike
-
         void set_min_num_afferent_per_neuron(int in) {min_num_afferent_per_neuron = in;} 
+        void set_max_number_of_connections_per_pair(int in) {max_number_of_connections_per_pair = in;} 
 
-        vector<int> get_neuron_with_synapses() {return neuron_with_synapses;}
+        //..
+        void SetIntputBinaryFile(string dir);  //..open spike output binary data. 
+        void read_in_SpikeTimes_data(); //.. read input spiking information from Spike binary output
+        void read_SpikeTimes_data(); //.. read spiking information from Spike binary output
+        void read_Synapses_data(); //.. read synapse information from Spike binary output
 
+        //..
+        void analyze_weight_change_after_STDP(string, string); //.. production ntuple of weight before and after STDP
+
+        //..
         int find_PG(); // find polychronous group
 };
