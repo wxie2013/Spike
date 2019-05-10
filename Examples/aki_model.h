@@ -21,7 +21,7 @@ class aki_model
         bool plasticity_on;
         float timestep;
 
-        // Files/Paths relevent to the input set
+        //.. output path
         string source;
         string filepath;
         string inputs_for_test_name;
@@ -30,6 +30,9 @@ class aki_model
         string neuron_dir;
         string input_dir;
         string synapse_dir;
+
+        //.. input path for loading exiting synapse data from binary output 
+        string existing_synapse_dir;
 
     private:
         ifstream configFile;
@@ -201,6 +204,13 @@ class aki_model
         conductance_spiking_synapse_parameters_struct * E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS;
 
 
+    private: //.. for reloading synapses from binary file 
+        vector<float> synapse_weight_vec;
+        vector<int> synapse_pre_ID_vec;
+        vector<int> synapse_post_ID_vec;
+        vector<int> synapse_delay_vec;
+        vector<pair<int,int>> synapse_start_end_ID_in_group;
+
     private:
         void load_weights(SpikingModel* Model, std::string weightloc); 
         void equalize_rates( ImagePoissonInputSpikingNeurons* input_neurons, float target);
@@ -212,6 +222,9 @@ class aki_model
         void setup_synapses();
         void define_synapses_parameters();
         void make_synapses_connections();
+        void load_synapses_connections();
+        void read_synaptic_data();
+        void AddSynapseGroup(int id1, int id2, conductance_spiking_synapse_parameters_struct* SYN_PARAMS, SpikingModel* Model, int start, int end);
 
     public:
         aki_model();

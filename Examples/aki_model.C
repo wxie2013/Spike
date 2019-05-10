@@ -140,6 +140,169 @@ void aki_model::make_synapses_connections()
             model->AddSynapseGroup(EXCITATORY_NEURONS[l], EXCITATORY_NEURONS[l], E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS);
     }
 }
+//__ read synaptic information from existing binary output ___
+void aki_model::read_synaptic_data()
+{
+    float weight;
+    int delay, pre_ID, post_ID;
+
+    string SynapticWeights_file = existing_synapse_dir+"SynapticWeights.bin";
+    string SynapticDelays_file = existing_synapse_dir+"SynapticDelays.bin";
+    string PresynapticIDs_file = existing_synapse_dir+"PresynapticIDs.bin";
+    string PostsynapticIDs_file = existing_synapse_dir+"PostsynapticIDs.bin";
+
+    ifstream SynapticWeights;
+    ifstream SynapticDelays;
+    ifstream PresynapticIDs;
+    ifstream PostsynapticIDs;
+
+    SynapticWeights.open(SynapticWeights_file, ios::in | ios::binary);
+    SynapticDelays.open(SynapticDelays_file, ios::in | ios::binary);
+    PresynapticIDs.open(PresynapticIDs_file, ios::in | ios::binary);
+    PostsynapticIDs.open(PostsynapticIDs_file, ios::in | ios::binary);
+
+    //..
+    if(!SynapticWeights.good() || !SynapticDelays.good() || !PresynapticIDs.good() || !PostsynapticIDs.good()) {
+        cout<<" !!!! following input binary data file does not exist,  exit !!!!"<<endl;
+        cout<<SynapticWeights_file<<endl;
+        cout<<SynapticDelays_file<<endl;
+        cout<<PresynapticIDs_file<<endl;
+        cout<<PostsynapticIDs_file<<endl;
+
+        exit(0);
+    }
+    //.. map pre_ID with other information of a synapses
+    while (SynapticWeights.good()) {
+        SynapticWeights.read((char*)&weight, sizeof(float));
+        SynapticDelays.read((char*)&delay, sizeof(int));
+        PresynapticIDs.read((char*)&pre_ID, sizeof(int));
+        PostsynapticIDs.read((char*)&post_ID, sizeof(int));
+
+        if(SynapticWeights.eof()) {
+            SynapticWeights.close();
+            SynapticDelays.close();
+            PresynapticIDs.close();
+            PostsynapticIDs.close();
+            break;
+        }
+
+        synapse_pre_ID_vec.push_back(pre_ID);
+        synapse_post_ID_vec.push_back(post_ID);
+        synapse_delay_vec.push_back(delay);
+        synapse_weight_vec.push_back(weight);
+    }
+    cout<<" --input synapses size: "<<synapse_pre_ID_vec.size()<<endl;
+
+    //.. now read the starting ID and ending ID of synapses in a group 
+    string synapse_start_end_ID_in_group_file = existing_synapse_dir+"synapse_start_end_ID_in_group_file.txt";
+    int start, end;
+    ifstream fin;
+    fin.open(synapse_start_end_ID_in_group_file, ifstream::in);
+    while(!fin.good()) {
+        fin >> start >> end;
+        synapse_start_end_ID_in_group.push_back(make_pair(start, end));
+    }
+}
+//_add synapses from existing out put_
+void aki_model::AddSynapseGroup(int id1, int id2, conductance_spiking_synapse_parameters_struct* SYN_PARAMS, SpikingModel* Model, int start, int end) 
+{
+    vector<int> prevec, postvec;
+    vector<float> weightvec;
+    vector<float> delayvec; //.. in seconds
+
+    for(int i = start; i<end; i++) {
+        prevec.push_back(synapse_pre_ID_vec[i]);
+        postvec.push_back(synapse_post_ID_vec[i]);
+        weightvec.push_back(synapse_weight_vec[i]);
+        delayvec.push_back(synapse_delay_vec[i]*timestep);
+    }
+
+    SYN_PARAMS->pairwise_connect_presynaptic = prevec;
+    SYN_PARAMS->pairwise_connect_postsynaptic = postvec;
+    SYN_PARAMS->pairwise_connect_weight = weightvec;
+    SYN_PARAMS->pairwise_connect_delay = delayvec;
+    SYN_PARAMS->connectivity_type = CONNECTIVITY_TYPE_PAIRWISE;
+
+    Model->AddSynapseGroup(id1, id2, SYN_PARAMS);
+}
+
+//__ loading existing synapses connections. For 4-layer model, making synapstic connect is too slow. 
+void aki_model::load_synapses_connections()
+{
+    //.. read exiting synaptic data ...
+    read_synaptic_data();
+
+    int groupID = 0; //.. synapse group ID
+    int start = 0;
+    int end = 0;
+
+    for (int l=0; l<number_of_layers; l++) {
+
+        if(l==0) {
+            for(int i = 1; i<=8; i++) {//..8 Garbor type: -1, -2, .., -8, otained from SpikingModel::AddSynapseGroupsForNeuronGroupAndEachInputGroup printout
+                start = synapse_start_end_ID_in_group[groupID].first;
+                end = synapse_start_end_ID_in_group[groupID].second;
+                AddSynapseGroup(-i, EXCITATORY_NEURONS[l], G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS, model, start, end);
+                groupID++;
+            }
+        } else{
+            E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->gaussian_synapses_standard_deviation = gaussian_synapses_standard_deviation_E2E_FF[l-1];
+            E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = layerwise_biological_conductance_scaling_constant_lambda_E2E_FF[l-1];
+
+            //.. E2E_FF has 2 connection per pre->post. One can directly set max_number_of_connections_per_pair = 2 in parameter setting, through there are some differences.  See Nashir's answer
+            for (int connection_number = 0; connection_number < max_number_of_connections_per_pair; connection_number++){
+
+                start = synapse_start_end_ID_in_group[groupID].first;
+                end = synapse_start_end_ID_in_group[groupID].second;
+
+                AddSynapseGroup(EXCITATORY_NEURONS[l-1], EXCITATORY_NEURONS[l], E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS, model, start, end);
+
+                groupID++;
+            }
+
+            if(E2E_FB_ON) {  // FF has 2 connect pre-post. why FB does not have ???
+
+                start = synapse_start_end_ID_in_group[groupID].first;
+                end = synapse_start_end_ID_in_group[groupID].second;
+
+                AddSynapseGroup(EXCITATORY_NEURONS[l], EXCITATORY_NEURONS[l-1], E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS, model, start, end);
+
+                groupID++;
+            }
+        }
+
+        E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = layerwise_biological_conductance_scaling_constant_lambda_E2I_L[l];
+
+        start = synapse_start_end_ID_in_group[groupID].first;
+        end = synapse_start_end_ID_in_group[groupID].second;
+
+        AddSynapseGroup(EXCITATORY_NEURONS[l], INHIBITORY_NEURONS[l], E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS, model, start, end);
+
+        groupID++;
+
+        if (inh_layer_on[l]){
+
+            start = synapse_start_end_ID_in_group[groupID].first;
+            end = synapse_start_end_ID_in_group[groupID].second;
+
+            I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS->weight_scaling_constant = layerwise_biological_conductance_scaling_constant_lambda_I2E_L[l];
+            AddSynapseGroup(INHIBITORY_NEURONS[l], EXCITATORY_NEURONS[l], I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS, model, start, end);
+
+            groupID++;
+        }
+
+        if(E2E_L_ON) {
+            start = synapse_start_end_ID_in_group[groupID].first;
+            end = synapse_start_end_ID_in_group[groupID].second;
+
+            AddSynapseGroup(EXCITATORY_NEURONS[l], EXCITATORY_NEURONS[l], E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS, model, start, end);
+
+            groupID++;
+        }
+    }
+
+    cout<<" ... number of synapse group: "<<groupID<<endl;
+}
 
 //___
 void aki_model::define_synapses_parameters()
@@ -472,6 +635,7 @@ void aki_model::load_run_config_parameters()
         configFile >> filepath;
         configFile >> inputs_for_test_name;
         configFile >> current_weight;
+        configFile >> existing_synapse_dir;
     }
 
     // output file location ...
@@ -504,6 +668,7 @@ void aki_model::load_run_config_parameters()
     cout<<" input file: "<<source + filepath + inputs_for_test_name <<endl;
     cout<<" current weight : "<<current_weight<<endl;
     cout<<" output location: "<<output_location<<endl;
+    cout<<" exiting synaptic data location: "<<existing_synapse_dir<<endl;
     cout<<" -----------------------------------------------"<<endl;
 }
 
