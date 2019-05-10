@@ -556,6 +556,20 @@ void Synapses::save_connectivity_as_binary(std::string path, std::string prefix,
   preidfile.close();
   postidfile.close();
   weightfile.close();
+
+  //.. now dump the synapse startID and endID in a group ..
+  std::ofstream synapse_start_end_ID_in_group_file;
+  synapse_start_end_ID_in_group_file.open((path + "/" + prefix + "synapse_start_end_ID_in_group_file.txt"), std::ios::out | std::ios::binary);
+  for(int i = 0; i<last_index_of_synapse_per_group.size(); i++) {
+      startid = 0;
+      endid = last_index_of_synapse_per_group[synapsegroupid];
+
+      if (i > 0) 
+          startid = last_index_of_synapse_per_group[i-1];
+
+      synapse_start_end_ID_in_group_file<<startid<<" "<<endid<<std::endl;
+  }
+  synapse_start_end_ID_in_group_file.close();
 }
 
 // Load Network??
