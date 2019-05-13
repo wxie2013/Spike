@@ -33,6 +33,7 @@ class aki_model
 
         //.. input path for loading exiting synapse data from binary output 
         string existing_synapse_dir;
+        bool load_existing_synapses; //.. switch to create or load existing synaptic connection ..
 
     private:
         ifstream configFile;
@@ -213,13 +214,13 @@ class aki_model
 
     private:
         void load_weights(SpikingModel* Model, std::string weightloc); 
-        void equalize_rates( ImagePoissonInputSpikingNeurons* input_neurons, float target);
+        void equalize_rates( ImagePoissonInputSpikingNeurons*, float);
         void load_run_config_parameters();
         void set_model_parameters();
-        void define_spiking_model();
+        void define_spiking_model(bool);
         void setup_STDP();
         void setup_neuron_groups();
-        void setup_synapses();
+        void setup_synapses(bool);
         void define_synapses_parameters();
         void make_synapses_connections();
         void load_synapses_connections();
@@ -227,8 +228,8 @@ class aki_model
         void AddSynapseGroup(int id1, int id2, conductance_spiking_synapse_parameters_struct* SYN_PARAMS, SpikingModel* Model, int start, int end);
 
     public:
-        aki_model();
+        aki_model(bool);
         ~aki_model();
 
-        void run_spiking_model(bool binary_output_only);
+        void run_spiking_model(bool);
 };

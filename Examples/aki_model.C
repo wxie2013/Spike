@@ -4,13 +4,13 @@
  *  Main function in which the network is created and run
  */
 
-aki_model::aki_model()
+aki_model::aki_model(bool load_existing_synapses = true)
 {
     load_run_config_parameters();
 
     set_model_parameters();
 
-    define_spiking_model();
+    define_spiking_model(load_existing_synapses);
 }
 
 aki_model::~aki_model()
@@ -59,7 +59,7 @@ void aki_model::run_spiking_model(bool binary_output_only=true)
 
 //
 // Defining the Spiking Model
-void aki_model::define_spiking_model()
+void aki_model::define_spiking_model(bool load_existing_synapses)
 {
     // Create the SpikingModel
     model = new SpikingModel();
@@ -94,17 +94,24 @@ void aki_model::define_spiking_model()
     setup_neuron_groups();
 
     // SETTING UP SYNAPSES
-    setup_synapses();
+    setup_synapses(load_existing_synapses);
 }
 
 //__
-void aki_model::setup_synapses()
+void aki_model::setup_synapses(bool load_existing_synapses)
 {
     // Creating a synapses parameter structure for connections from the input neurons to the excitatory neurons
     adding_synapses_timer = new TimerWithMessages("Adding Synapses...\n");
 
     define_synapses_parameters();
-    make_synapses_connections();
+
+    if(!load_existing_synapses) {
+        cout<<" --- creating synapses connections from scratch ----"<<endl;
+        make_synapses_connections();
+    } else {
+        cout<<" --- load existing synapses connections -----"<<endl;
+        load_synapses_connections();
+    }
 
     adding_synapses_timer->stop_timer_and_log_time_and_message("Synapses Added.", true);
 }
@@ -186,6 +193,9 @@ void aki_model::read_synaptic_data()
             break;
         }
 
+        if(pre_ID <0) { 
+            pre_ID = -pre_ID -1; //.. input pre_ID was set to (-original_ID -1) via CORRECTED_PRESYNAPTIC_ID, make it positive and start from 0
+        }
         synapse_pre_ID_vec.push_back(pre_ID);
         synapse_post_ID_vec.push_back(post_ID);
         synapse_delay_vec.push_back(delay);
@@ -198,10 +208,12 @@ void aki_model::read_synaptic_data()
     int start, end;
     ifstream fin;
     fin.open(synapse_start_end_ID_in_group_file, ifstream::in);
-    while(!fin.good()) {
+    while(1) {
         fin >> start >> end;
+        if(fin.eof()) break;
         synapse_start_end_ID_in_group.push_back(make_pair(start, end));
     }
+    cout<<" ... number of synapse groups: "<<synapse_start_end_ID_in_group.size()<<endl;
 }
 //_add synapses from existing out put_
 void aki_model::AddSynapseGroup(int id1, int id2, conductance_spiking_synapse_parameters_struct* SYN_PARAMS, SpikingModel* Model, int start, int end) 
@@ -645,6 +657,8 @@ void aki_model::load_run_config_parameters()
     input_dir  = output_location + "input_dir/";
     synapse_dir  = output_location + "synapse_dir/";
 
+    existing_synapse_dir = source + existing_synapse_dir;
+
     cout<<starting_time<<" "<<to_string(starting_time)<<endl;
 
     if( mkdir(output_location.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
@@ -670,6 +684,8 @@ void aki_model::load_run_config_parameters()
     cout<<" output location: "<<output_location<<endl;
     cout<<" exiting synaptic data location: "<<existing_synapse_dir<<endl;
     cout<<" -----------------------------------------------"<<endl;
+
+    load_existing_synapses = true;  //..default: load from existing file, creation from scratch is time consuming  ...
 }
 
 /** Function to load weights from a file into a SpikingModel.

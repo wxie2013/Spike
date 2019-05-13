@@ -6,4 +6,4 @@
 Data/MatlabGaborFilter/   
 simpleShapes/                    
 output/Start0.000000End0.200000/synapse_dir/SynapticWeights.bin
-exiting_synapses_file
+output/synapse_dir/
