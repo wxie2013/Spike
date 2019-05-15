@@ -212,6 +212,10 @@ void aki_model::read_synaptic_data()
     int start, end;
     ifstream fin;
     fin.open(synapse_start_end_ID_in_group_file, ifstream::in);
+    if(!fin.good()) {
+        cout<<" !!! synapse_start_end_ID_in_group_file.txt does not exist, exit(0)"<<endl;
+        exit(0);
+    }
     while(1) {
         fin >> start >> end;
         if(fin.eof()) break;
