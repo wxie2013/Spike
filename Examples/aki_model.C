@@ -16,23 +16,27 @@ aki_model::aki_model(bool load_existing_synapses = true)
 aki_model::~aki_model()
 {
     delete model;
-    delete input_neurons;
-    delete lif_spiking_neurons;
-    delete conductance_spiking_synapses;
     delete spike_monitor;
     delete input_spike_monitor;
     delete adding_synapses_timer;
+    delete adding_input_neurons_timer;
+    delete adding_neurons_timer;
+
+    //delete input_neurons; //.. not sure why delete this cause core dump
+    delete lif_spiking_neurons;
+    delete conductance_spiking_synapses;
+
     delete G2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS;
     delete E2E_FF_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS;
     delete E2E_FB_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS;
     delete E2I_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS;
     delete I2E_L_INHIBITORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS;
     delete E2E_L_EXCITATORY_CONDUCTANCE_SPIKING_SYNAPSE_PARAMETERS;
-    delete adding_input_neurons_timer;
-    delete adding_neurons_timer;
+
     delete EXCITATORY_LIF_SPIKING_NEURON_GROUP_PARAMS;
     delete INHIBITORY_LIF_SPIKING_NEURON_GROUP_PARAMS;
     delete STDP_PARAMS;
+
     delete evans_stdp;
 }
 
