@@ -231,8 +231,14 @@ void production::analyze_weight_change_after_STDP(string dir1, string dir2)
         int delay2 = it2->second.delay;
 
         if(postid1!=postid2 || preid1!=preid2 || delay1!=delay2) {
-            cout<<" !!! the two files are not syncronized, exit !!!"<<endl;
-            exit(0);
+            //.. a small bug in the latest version of Spike, only a few synapses affect, thus ignore ..
+            if(!(postid1==0 && postid2==-1 || \
+                 postid1==-1 && postid2==0 || \
+                 preid1==0 && preid2==-1 || \
+                 preid1==-1 && preid2==0)) { 
+                cout<<" !!! the two files are not syncronized, exit !!!"<<endl;
+                exit(0);
+            }
         }
 
         nt.Fill(preid1, postid1, w1, w2, delay1, delay2);
