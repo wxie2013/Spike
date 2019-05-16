@@ -210,7 +210,7 @@ void aki_model::set_model_parameters()
 
     // Below are the decay rates of the variables for learning: Pre/Post synaptic activities C and D (See Ben Evans)
     // Aki's model tried 5, 25, 125 ms for both Tau_C and Tau_D. the shorter, the more PGs
-    decay_term_tau_C = 0.003;//aki's model:0.005(In Ben's model, tau_C/tau_D = 0.003/0.005 v 0.015/0.025 v 0.075/0.125, and the first one produces the best result)
+    decay_term_tau_C = 0.005;//aki's model:0.005(In Ben's model, tau_C/tau_D = 0.003/0.005 v 0.015/0.025 v 0.075/0.125, and the first one produces the best result)
     decay_term_tau_D = 0.005;
 
     // Biological Scaling Constant = How much you multiply the weights up or down for realism/stability
@@ -222,37 +222,40 @@ void aki_model::set_model_parameters()
     //float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; // 20ns
     //float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; // 100ns
 
-    biological_conductance_scaling_constant_lambda_G2E_FF = 0.2 * 0.0001 * original_timestep; //. below 0.3ns, no spiking. set to 0.4ns 
-    biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep; 
-    biological_conductance_scaling_constant_lambda_E2E_FB = 0.0001 * original_timestep; 
-    biological_conductance_scaling_constant_lambda_E2E_L  = 0.000001 * original_timestep; 
-    biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; 
-    biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; 
+    biological_conductance_scaling_constant_lambda_G2E_FF = 0.15 * 0.0001 * original_timestep; //.. 0.3 ns. between [0.0, 0.4] ns
+    biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep; //.. 1.0 ns 
+    biological_conductance_scaling_constant_lambda_E2E_FB = 0.00005 * original_timestep; //.. 1.0 ns
+    biological_conductance_scaling_constant_lambda_E2E_L  = 0.00005 * original_timestep; //.. 1.0 ns
+    biological_conductance_scaling_constant_lambda_E2I_L  = 0.002 * original_timestep; //.. 40 ns
+    biological_conductance_scaling_constant_lambda_I2E_L  = 0.004 * original_timestep;  //.. 80 ns
 
 
     // is the re-adjust the scaling factor come from optimization?
-    float tmp_1[number_of_layers-1] = {
-        0.625f * biological_conductance_scaling_constant_lambda_E2E_FF,
-        0.5f * biological_conductance_scaling_constant_lambda_E2E_FF,
-        0.75f * biological_conductance_scaling_constant_lambda_E2E_FF};
+    //float tmp_1[number_of_layers-1] = {
+    //    0.625f * biological_conductance_scaling_constant_lambda_E2E_FF,
+    //    0.5f * biological_conductance_scaling_constant_lambda_E2E_FF,
+    //    0.75f * biological_conductance_scaling_constant_lambda_E2E_FF};
+    float tmp_1[number_of_layers-1] = {1, 1, 1};
     for(int i = 0; i<number_of_layers-1; i++)
         layerwise_biological_conductance_scaling_constant_lambda_E2E_FF[i] = tmp_1[i];
 
     // Aki's model fixed at 40ns for all layers. Use these values for now and change to 40ns if needed
-    float tmp_2[number_of_layers] = {
-        1.1f * biological_conductance_scaling_constant_lambda_E2I_L,
-        1.625f * biological_conductance_scaling_constant_lambda_E2I_L,
-        0.875f * biological_conductance_scaling_constant_lambda_E2I_L,
-        1.6f * biological_conductance_scaling_constant_lambda_E2I_L};
+    //float tmp_2[number_of_layers] = {
+    //    1.1f * biological_conductance_scaling_constant_lambda_E2I_L,
+    //    1.625f * biological_conductance_scaling_constant_lambda_E2I_L,
+    //    0.875f * biological_conductance_scaling_constant_lambda_E2I_L,
+    //    1.6f * biological_conductance_scaling_constant_lambda_E2I_L};
+    float tmp_2[number_of_layers] = {1, 1, 1};
     for(int i = 0; i<number_of_layers; i++)
         layerwise_biological_conductance_scaling_constant_lambda_E2I_L[i] = tmp_2[i];
 
     // Aki's model fixed at 80 ns. Use these values for now and change to 80ns if needed
-    float tmp_3[number_of_layers] = {
-        0.04f * biological_conductance_scaling_constant_lambda_I2E_L,
-        0.375f * biological_conductance_scaling_constant_lambda_I2E_L,
-        0.2f * biological_conductance_scaling_constant_lambda_I2E_L,
-        0.325f * biological_conductance_scaling_constant_lambda_I2E_L};
+    //float tmp_3[number_of_layers] = {
+    //    0.04f * biological_conductance_scaling_constant_lambda_I2E_L,
+    //    0.375f * biological_conductance_scaling_constant_lambda_I2E_L,
+    //    0.2f * biological_conductance_scaling_constant_lambda_I2E_L,
+    //    0.325f * biological_conductance_scaling_constant_lambda_I2E_L};
+    float tmp_3[number_of_layers] = {1, 1, 1};
     for(int i = 0; i<number_of_layers; i++)
         layerwise_biological_conductance_scaling_constant_lambda_I2E_L[i] = tmp_3[i];
 
@@ -265,7 +268,7 @@ void aki_model::set_model_parameters()
     decay_term_tau_g_E2E_FB = 0.15;
     decay_term_tau_g_E2E_L = 0.15;//0.002 v. 0.15 and 0.15 is better?
     decay_term_tau_g_E2I_L = 0.002;
-    decay_term_tau_g_I2E_L = 0.025;//Aki's model 0.005;//In Ben's model, 0.005 v 0.025 and latter produced better result
+    decay_term_tau_g_I2E_L = 0.005;//Aki's model 0.005;//In Ben's model, 0.005 v 0.025 and latter produced better result
 }
 
 //
