@@ -103,6 +103,12 @@ void production::read_Synapses_data()
         PresynapticIDs.read((char*)&pre_ID, sizeof(int));
         PostsynapticIDs.read((char*)&post_ID, sizeof(int));
 
+        //.. when doing EE_L, i.e. lateral connection between excited neurons, 
+        //.. there's no protection against self connection . The fraction of 
+        //.. this self connection is 0.01%, thus ignored
+        if(pre_ID == post_ID) 
+            continue;
+
         if(SynapticWeights.eof()) {
             SynapticWeights.close();
             SynapticDelays.close();
