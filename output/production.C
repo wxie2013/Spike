@@ -232,6 +232,11 @@ void production::analyze_weight_change_after_STDP(string dir1, string dir2)
 
         if(postid1!=postid2 || preid1!=preid2 || delay1!=delay2) {
             //.. a small bug in the latest version of Spike, only a few synapses affect, thus ignore ..
+            //.. in the CONNECTIVITY_TYPE_GAUSSIAN_SAMPLE of Synapse.cpp,  total_probability reduce after each pre_ID is assigned. 
+            //.. because of the precision, the last total_probability can be negative, e.g. -1e-7. 
+            //.. then the randval > probability_trace can never be satisfied. Then last pre_ID will have the initial value, i.e. 0
+            //.. I tried double precision on total_probability and pre_neuron_probabilities and still cannot completely solve the problem. 
+            //.. since the number is small and only happens to input neurons, I choose to ignore it. 
             if(!(postid1==0 && postid2==-1 || \
                  postid1==-1 && postid2==0 || \
                  preid1==0 && preid2==-1 || \
