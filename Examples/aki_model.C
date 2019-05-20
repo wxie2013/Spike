@@ -44,10 +44,6 @@ aki_model::~aki_model()
 //__ run the model ...
 void aki_model::run_spiking_model(bool binary_output_only=true)
 {
-    // if it's already trained, load any weights before finalising the model
-    if (starting_time != 0){
-        load_weights(model, current_weight);
-    }
     model->run(simtime, plasticity_on);
 
     //use binary mode. The text mode is too slow ..
@@ -76,7 +72,6 @@ void aki_model::load_run_config_parameters()
     source = "";
     filepath = "";
     inputs_for_test_name = "";
-    current_weight= "";  //since default it no training yet, there's no current weight location
 
     configFile.open ("run_config.txt", ifstream::in);
     if(!configFile.good()) {
@@ -89,12 +84,10 @@ void aki_model::load_run_config_parameters()
         configFile >> source;
         configFile >> filepath;
         configFile >> inputs_for_test_name;
-        configFile >> current_weight;
         configFile >> existing_synapse_dir;
     }
 
     // output file location ...
-    current_weight = source + current_weight;
     output_location = source + "output/Start"+to_string(starting_time)+"End"+to_string(starting_time+simtime)+"/";
     neuron_dir  = output_location + "neuron_dir/";
     input_dir  = output_location + "input_dir/";
@@ -123,7 +116,6 @@ void aki_model::load_run_config_parameters()
     cout<<" plasticity_on: "<<plasticity_on<<endl;
     cout<<" timestep: "<<timestep<<endl;
     cout<<" input file: "<<source + filepath + inputs_for_test_name <<endl;
-    cout<<" current weight : "<<current_weight<<endl;
     cout<<" output location: "<<output_location<<endl;
     cout<<" exiting synaptic data location: "<<existing_synapse_dir<<endl;
     cout<<" -----------------------------------------------"<<endl;
@@ -728,43 +720,3 @@ void aki_model::equalize_rates( ImagePoissonInputSpikingNeurons* input_neurons, 
         }
     }
 }
-
-
-/** Function to load weights from a file into a SpikingModel.
-  save time. No need to run the model again
-  note: model->spiking_synapses->load_weights_from_binary(current_weight);  does not work.
- */
-void aki_model::load_weights( SpikingModel* Model,  std::string weightloc )  
-{
-    std::ifstream weightfile;
-    std::vector<float> WeightsToLoad; // This vector should ultimately hold the list of replacement weights
-
-    weightfile.open (weightloc, ios::in | ios::binary);
-    if(!weightfile.good()) {
-        cout<<" !!! Current weight file: "<< weightloc << "does not exist,  exit !!!"<<endl;
-        exit(0);
-    }
-    while( weightfile.good() )
-    {
-        float currentweight;
-        weightfile.read((char*)&currentweight, sizeof(float));
-        if (weightfile.eof()) {
-            weightfile.close();
-            break;
-        }
-        WeightsToLoad.push_back(currentweight);
-    }
-    // Check if you have the correct number of weights
-    if (WeightsToLoad.size() != Model->spiking_synapses->total_number_of_synapses){
-        printf("%d, %d\n", (int)WeightsToLoad.size(), Model->spiking_synapses->total_number_of_synapses);
-        printf("The number of weights being loaded is not equivalent to the model.");
-        exit(2);
-    }
-    // If the previous test is passed, apply the weights
-    for (int i=0; i < WeightsToLoad.size(); i++){
-        Model->spiking_synapses->synaptic_efficacies_or_weights[i] = WeightsToLoad[i];
-    }
-
-    cout<<WeightsToLoad.size()<<" Weights Loaded from "<<weightloc<<endl;
-}
-
