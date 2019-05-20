@@ -20,6 +20,7 @@ class aki_model
         float simtime;
         bool plasticity_on;
         float timestep;
+        bool is_ActivityMonitor_on;
 
         //.. output path
         string source;
@@ -221,6 +222,7 @@ class aki_model
         void setup_STDP();
         void setup_neuron_groups();
         void setup_synapses(bool);
+        void setup_ActivityMonitor();
         void define_synapses_parameters();
         void make_synapses_connections();
         void load_synapses_connections();
@@ -231,5 +233,6 @@ class aki_model
         aki_model(bool);
         ~aki_model();
 
+        void activate_ActivityMonitor(bool in) {is_ActivityMonitor_on = in;}
         void run_spiking_model(bool);
 };

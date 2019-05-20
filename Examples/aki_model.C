@@ -16,8 +16,12 @@ aki_model::aki_model(bool load_existing_synapses = true)
 aki_model::~aki_model()
 {
     delete model;
-    delete spike_monitor;
-    delete input_spike_monitor;
+
+    if(is_ActivityMonitor_on) {
+        delete spike_monitor;
+        delete input_spike_monitor;
+    }
+
     delete adding_synapses_timer;
     delete adding_input_neurons_timer;
     delete adding_neurons_timer;
@@ -44,17 +48,24 @@ aki_model::~aki_model()
 //__ run the model ...
 void aki_model::run_spiking_model(bool binary_output_only=true)
 {
+    if(is_ActivityMonitor_on) 
+        setup_ActivityMonitor();
+
     model->run(simtime, plasticity_on);
 
     //use binary mode. The text mode is too slow ..
     if(!binary_output_only) {
-        spike_monitor->save_spikes_as_txt(neuron_dir);
-        input_spike_monitor->save_spikes_as_txt(input_dir);
+        if(is_ActivityMonitor_on) {
+            spike_monitor->save_spikes_as_txt(neuron_dir);
+            input_spike_monitor->save_spikes_as_txt(input_dir);
+        }
         model->spiking_synapses->save_connectivity_as_txt(synapse_dir);
     }
 
-    spike_monitor->save_spikes_as_binary(neuron_dir);
-    input_spike_monitor->save_spikes_as_binary(input_dir);
+    if(is_ActivityMonitor_on) {
+        spike_monitor->save_spikes_as_binary(neuron_dir);
+        input_spike_monitor->save_spikes_as_binary(input_dir);
+    }
     model->spiking_synapses->save_connectivity_as_binary(synapse_dir);
 }
 
@@ -67,6 +78,8 @@ void aki_model::load_run_config_parameters()
     simtime = 2.0f;  //simulation time in seconds starting from the starting_time; Can be set higher than usual for any period for generally test the network behaviour.
     plasticity_on = false;  // turn on the plasticity or not
     timestep = 0.00002;  // can set to any value for testing. set it to original_timestep when run 
+
+    is_ActivityMonitor_on = false; //.. consume lots of REM, turn it off by default. Turn it on when doing testing 
 
     // Files/Paths relevent to the input set
     source = "";
@@ -290,17 +303,22 @@ void aki_model::define_spiking_model(bool load_existing_synapses)
     // setup STDP. According to the https://sites.google.com/view/spike-simulator/home/simple-example, add plastiscity rule need to be here
     setup_STDP();
 
-    // ADD ANY ACTIVITY MONITORS OR PLASTICITY RULES YOU WISH FOR
-    spike_monitor = new SpikingActivityMonitor(lif_spiking_neurons);
-    input_spike_monitor = new SpikingActivityMonitor(input_neurons);
-    model->AddActivityMonitor(spike_monitor);
-    model->AddActivityMonitor(input_spike_monitor);
 
     // setup neuron groups
     setup_neuron_groups();
 
     // SETTING UP SYNAPSES
     setup_synapses(load_existing_synapses);
+}
+
+//__
+void aki_model::setup_ActivityMonitor()
+{
+    // ADD ANY ACTIVITY MONITORS OR PLASTICITY RULES YOU WISH FOR
+    spike_monitor = new SpikingActivityMonitor(lif_spiking_neurons);
+    input_spike_monitor = new SpikingActivityMonitor(input_neurons);
+    model->AddActivityMonitor(spike_monitor);
+    model->AddActivityMonitor(input_spike_monitor);
 }
 
 //__
