@@ -1,9 +1,8 @@
-0.0       
-1
+0.5       
+5
 1     
 0.00002 
-/home/wxie/AI/Spike/master/Spike/
+../../
 Data/MatlabGaborFilter/   
 simpleShapes/                    
-output/Start0.000000End0.200000/synapse_dir/SynapticWeights.bin
 output/synapse_dir/
