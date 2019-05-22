@@ -109,6 +109,7 @@ void production::read_Synapses_data()
         if(pre_ID == post_ID) 
             continue;
 
+        //
         if(SynapticWeights.eof()) {
             SynapticWeights.close();
             SynapticDelays.close();
@@ -201,12 +202,19 @@ int production::find_PG()
 }
 
 //__
-void production::analyze_weight_change_after_STDP(string dir1, string dir2)
+void production::analyze_weight_change_after_STDP(string &dir1, string &dir2)
 {
-    TFile f("analyse_weight_change_after_STDP.root", "RECREATE");
+    string file1 = dir1;
+    string file2 = dir2;
+    replace(file1.begin(), file1.end(), '/', '_'); //.. note: use '' instead of ""
+    replace(file2.begin(), file2.end(), '/', '_'); //.. note: use '' instead of ""
+
+    string outfile = "compare_"+file1+"_"+file2+".root";
+    TFile f(outfile.c_str(), "RECREATE");
 
     TNtuple nt("nt", "", "preid:postid:w1:w2:delay1:delay2");
 
+    map_Synapse.clear(); //.. make sure clear it to avoid carry on from the previous loop
     //.. get synapse information from 1st file 
     SetIntputBinaryFile(dir1);
     read_Synapses_data();
@@ -243,10 +251,12 @@ void production::analyze_weight_change_after_STDP(string dir1, string dir2)
             //.. then the randval > probability_trace can never be satisfied. Then last pre_ID will have the initial value, i.e. 0
             //.. I tried double precision on total_probability and pre_neuron_probabilities and still cannot completely solve the problem. 
             //.. since the number is small and only happens to input neurons, I choose to ignore it. 
-            if(!(postid1==0 && postid2==-1 || \
-                 postid1==-1 && postid2==0 || \
-                 preid1==0 && preid2==-1 || \
-                 preid1==-1 && preid2==0)) { 
+            if(!(
+                        (postid1==0 && postid2==-1) || \
+                        (postid1==-1 && postid2==0) || \
+                        (preid1==0 && preid2==-1) || \
+                        (preid1==-1 && preid2==0)
+                )) { 
                 cout<<" !!! the two files are not syncronized, exit !!!"<<endl;
                 exit(0);
             }
@@ -261,5 +271,5 @@ void production::analyze_weight_change_after_STDP(string dir1, string dir2)
     nt.Write();
     f.Close();
 
-    cout<<" -- created: analyse_weight_change_after_STDP.root ----"<<endl;
+    cout<<" -- created: "<<outfile<<" ----"<<endl;
 }

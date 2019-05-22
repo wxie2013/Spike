@@ -82,7 +82,7 @@ class production
         void read_Synapses_data(); //.. read synapse information from Spike binary output
 
         //..
-        void analyze_weight_change_after_STDP(string, string); //.. production ntuple of weight before and after STDP
+        void analyze_weight_change_after_STDP(string &, string &); //.. production ntuple of weight before and after STDP
 
         //..
         int find_PG(); // find polychronous group
