@@ -69,8 +69,6 @@ class production
         void find_post_neuron_with_synapses();
         void find_all_afferent_neuron_for_a_neuron();
 
-        void loop_over_map_for_Fig_9(map<int, vector<pair<Synapse, Synapse>>> &, bool, TNtuple &);
-
         void clear();
 
     public:

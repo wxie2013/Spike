@@ -307,59 +307,73 @@ void production::analyze_weight_change_after_STDP(string &dir1, string &dir2)
 }
 
 //__
-void production::loop_over_map_for_Fig_9(map<int, vector<pair<Synapse, Synapse>>> &m, bool trained, TNtuple &nt)
+void production::Fig_9(string &dir1, string &dir2)
 {
-    map<int, vector<pair<Synapse, Synapse>>>::iterator it  = m.begin();
+    TFile f("Fig_9.root", "RECREATE");
 
-    while(it != m.end()) {
+    TNtuple nt("nt", "", "preid:postid:w1:w2:tw1:tw2:delay1:delay2");
 
-        int postid = it->first;
-        for(unsigned int i = 0; i<it->second.size(); i++) {
-            int preid1 = it->second[i].first.pre_ID;
-            int preid2 = it->second[i].second.pre_ID;
+    //.. get synapse information from 1st file 
+    cout<<" loading synapses in: "<<dir1<<endl;
+    SetIntputBinaryFile(dir1);
+    read_Synapses_data();
+    map<int, vector<pair<Synapse, Synapse>>> m1 = find_duplicated_pre_post_pairs();
 
-            float w1 = it->second[i].first.weight;
-            float w2 = it->second[i].second.weight;
+    //.. get synapse information from 2nd file 
+    cout<<" loading synapses in: "<<dir2<<endl;
+    SetIntputBinaryFile(dir2);
+    read_Synapses_data();
+    map<int, vector<pair<Synapse, Synapse>>> m2 = find_duplicated_pre_post_pairs();
 
-            float delay1 = it->second[i].first.delay;
-            float delay2 = it->second[i].second.delay;
+    if(m1.size() != m2.size()) {
+        cout<<" !!! the two map should have the same size, exit !!!"<<endl;
+        exit(0);
+    }
+    //..
+    map<int, vector<pair<Synapse, Synapse>>>::iterator it1  = m1.begin();
+    map<int, vector<pair<Synapse, Synapse>>>::iterator it2  = m2.begin();
+
+    //..
+    while(it1 != m1.end()) {
+
+        int postid = it1->first;
+        for(unsigned int i = 0; i<it1->second.size(); i++) {
+            //.. sanitary check
+            if(it1->first != it2->first || 
+               it1->second[i].first.pre_ID != it2->second[i].first.pre_ID || 
+               it1->second[i].second.pre_ID != it2->second[i].second.pre_ID || 
+               it1->second[i].first.delay != it2->second[i].first.delay ||
+               it1->second[i].second.delay != it2->second[i].second.delay) {
+
+                cout<<" !! the pre_ID and post_ID should be syncronized in these two maps, exit !!"<<endl;
+                exit(0);
+            }
+            //
+            int preid1 = it1->second[i].first.pre_ID;
+            int preid2 = it1->second[i].second.pre_ID;
+
+            float w1 = it1->second[i].first.weight;
+            float w2 = it1->second[i].second.weight;
+
+            float tw1 = it2->second[i].first.weight;  //.. trained ..
+            float tw2 = it2->second[i].second.weight;  //.. trained ..
+
+            float delay1 = it1->second[i].first.delay;
+            float delay2 = it1->second[i].second.delay;
 
             if(preid1 !=preid2) {
                 cout<<" !!! the two preids, i.e. id1: "<<preid1<<" and id2: "<<preid2<<" need to be identical, exit(0) "<<endl;
                 exit(0);
             }
 
-            nt.Fill(preid1, postid, w1, w2, delay1, delay2, trained); 
+            nt.Fill(preid1, postid, w1, w2, tw1, tw2, delay1, delay2); 
         }
 
-        it++;
+        it1++;
+        it2++;
     }
 
-}
-//__
-void production::Fig_9(string &dir1, string &dir2)
-{
-    TFile f("Fig_9.root", "RECREATE");
 
-    TNtuple nt("nt", "", "preid:postid:w1:w2:delay1:delay2:trained");
-
-    //.. get synapse information from 1st file 
-    cout<<" loading synapses in: "<<dir1<<endl;
-    SetIntputBinaryFile(dir1);
-    read_Synapses_data();
-    map<int, vector<pair<Synapse, Synapse>>> m = find_duplicated_pre_post_pairs();
-
-    loop_over_map_for_Fig_9(m,0, nt);
-
-
-    m.clear(); //.. clear it for next files
-    //.. get synapse information from 1st file 
-    cout<<" loading synapses in: "<<dir2<<endl;
-    SetIntputBinaryFile(dir2);
-    read_Synapses_data();
-    m = find_duplicated_pre_post_pairs();
-
-    loop_over_map_for_Fig_9(m, 1 , nt);
 
     nt.Write();
     f.Close();
