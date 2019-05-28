@@ -24,10 +24,9 @@ void production::read_in_SpikeTimes_data()
     in_SpikeIDs.open(in_SpikeIDs_file, ios::in | ios::binary);
 
     if(!in_SpikeTimes.good() || !in_SpikeIDs.good()) { 
-        cout<<" !!!! following input binary data file does not exist,  exit !!!!"<<endl;
+        cout<<" !!!! following input binary data file does not exist !!!!"<<endl;
         cout<<in_SpikeTimes_file<<endl;
         cout<<in_SpikeIDs_file<<endl;
-        exit(0);
     }
     //.. map input neuron spike time and ID
     while (in_SpikeTimes.good()) {
@@ -55,10 +54,9 @@ void  production::read_SpikeTimes_data()
     SpikeIDs.open(SpikeIDs_file, ios::in | ios::binary);
 
     if(!SpikeTimes.good() || !SpikeIDs.good()) {
-        cout<<" !!!! following input binary data file does not exist,  exit !!!!"<<endl;
+        cout<<" !!!! following input binary data file does not exist!!!!"<<endl;
         cout<<SpikeTimes_file<<endl;
         cout<<SpikeIDs_file<<endl;
-        exit(0);
     }
     //.. map other neuron spike time and ID
     while (SpikeTimes.good()) {
@@ -150,7 +148,7 @@ void production::SetIntputBinaryFile(string dir)
 }
 
 //__ find unique post_IDs of neurons with any number of synapse in the network
-void production::find_neuron_with_synapses()
+void production::find_post_neuron_with_synapses()
 {
     for(multimap<int, Synapse>::iterator it = map_Synapse.begin(); it != map_Synapse.end(); it++) 
         neuron_with_synapses.push_back(it->first);
@@ -166,10 +164,8 @@ void production::find_neuron_with_synapses()
 //__ map each post neuron with all of its afferent neurons 
 void production::find_all_afferent_neuron_for_a_neuron()
 {
-    find_neuron_with_synapses();
-
     pair<multimap<int, Synapse>::iterator, multimap<int, Synapse>::iterator> range;
-    vector<int> pre_ids;
+    vector<Synapse> pre_ids;
 
     for(unsigned int i = 0; i< neuron_with_synapses.size(); i++) {
 
@@ -178,26 +174,53 @@ void production::find_all_afferent_neuron_for_a_neuron()
         range = map_Synapse.equal_range(neuron_with_synapses[i]); //.. all afferent neuron of a post synaptic neuron. The map is sorted already
 
         for(multimap<int, Synapse>::iterator it = range.first; it!=range.second; it++) {
-            pre_ids.push_back(it->second.pre_ID);
+            pre_ids.push_back(it->second);
         }
         neuron_with_all_afferent.insert(make_pair(neuron_with_synapses[i], pre_ids));
-
-        //.. find duplicated key-value pairs
-        std::pair<std::vector<int>::iterator,std::vector<int>::iterator> bounds;
-        vector<int> nid = pre_ids;
-        sort(nid.begin(), nid.end());
-        for(unsigned int j = 0; j<nid.size(); j++) {
-            bounds=std::equal_range (nid.begin(), nid.end(), nid[j]);
-            if((bounds.second - bounds.first) >max_number_of_connections_per_pair) 
-                cout<<neuron_with_synapses[i]<<" "<<nid[j]<<endl;
-        }
     }
+}
+
+//__  find duplicated key-value pairs
+map<int, vector<pair<Synapse, Synapse>>> production::find_duplicated_pre_post_pairs()
+{
+    //
+    find_post_neuron_with_synapses();
+    find_all_afferent_neuron_for_a_neuron();
+
+    //
+    map<int, vector<pair<Synapse, Synapse>>> neuron_with_all_afferent_with_2_synapses;
+
+    for(map<int, vector<Synapse>>::iterator it = neuron_with_all_afferent.begin(); it !=neuron_with_all_afferent.end(); it++) {
+
+        std::pair<std::vector<Synapse>::iterator,std::vector<Synapse>::iterator> bounds;
+
+        vector<Synapse> nid = it->second;
+        sort(nid.begin(), nid.end());
+
+        vector<pair<Synapse, Synapse>> two_synapses;
+
+        for(unsigned int i = 0; i<nid.size(); i++) {
+            bounds=std::equal_range (nid.begin(), nid.end(), nid[i]);
+
+            if((bounds.second - bounds.first) == max_number_of_connections_per_pair) {
+                unsigned int index = bounds.first - nid.begin();
+
+                two_synapses.push_back(make_pair(nid[index], nid[index+1]));
+                i++; //.. no need to go through again the 2nd synapse of the same pair
+            }
+        }
+
+        //..
+        neuron_with_all_afferent_with_2_synapses.insert(make_pair(it->first, two_synapses));
+    }
+
+    return neuron_with_all_afferent_with_2_synapses;
 }
 
 //__ find polychronous group 
 int production::find_PG()
 {
-    find_all_afferent_neuron_for_a_neuron();
+    find_duplicated_pre_post_pairs();
     return num_PG;
 }
 
@@ -272,4 +295,67 @@ void production::analyze_weight_change_after_STDP(string &dir1, string &dir2)
     f.Close();
 
     cout<<" -- created: "<<outfile<<" ----"<<endl;
+}
+
+//__
+void production::loop_over_map_for_Fig_9(map<int, vector<pair<Synapse, Synapse>>> &m, bool trained, TNtuple &nt)
+{
+    map<int, vector<pair<Synapse, Synapse>>>::iterator it  = m.begin();
+
+    while(it != m.end()) {
+
+        int postid = it->first;
+        for(unsigned int i = 0; i<it->second.size(); i++) {
+            int preid1 = it->second[i].first.pre_ID;
+            int preid2 = it->second[i].second.pre_ID;
+
+            float w1 = it->second[i].first.weight;
+            float w2 = it->second[i].second.weight;
+
+            float delay1 = it->second[i].first.delay;
+            float delay2 = it->second[i].second.delay;
+
+            if(preid1 !=preid2) {
+                cout<<" !!! the two preids, i.e. id1: "<<preid1<<" and id2: "<<preid2<<" need to be identical, exit(0) "<<endl;
+                exit(0);
+            }
+
+            nt.Fill(preid1, postid, w1, w2, delay1, delay2, trained); 
+        }
+
+        it++;
+    }
+
+}
+//__
+void production::Fig_9(string &dir1, string &dir2)
+{
+    TFile f("Fig_9.root", "RECREATE");
+
+    TNtuple nt("nt", "", "preid:postid:w1:w2:delay1:delay2:trained");
+
+    map_Synapse.clear(); //.. make sure clear it to avoid carry on from the previous loop
+    //.. get synapse information from 1st file 
+    SetIntputBinaryFile(dir1);
+    read_Synapses_data();
+    map<int, vector<pair<Synapse, Synapse>>> m = find_duplicated_pre_post_pairs();
+
+    loop_over_map_for_Fig_9(m,0, nt);
+
+
+    //.. clear the map_Synapse before reading the 2nd file 
+    map_Synapse.clear();
+    m.clear();
+
+    //.. get synapse information from 1st file 
+    SetIntputBinaryFile(dir2);
+    read_Synapses_data();
+    m = find_duplicated_pre_post_pairs();
+
+    loop_over_map_for_Fig_9(m, 1 , nt);
+
+    nt.Write();
+    f.Close();
+
+    cout<<" -- created: Fig_9.root ----"<<endl;
 }

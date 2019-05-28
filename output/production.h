@@ -13,9 +13,11 @@
 using namespace std;
 
 struct Synapse {
-  int pre_ID;
-  float weight;
-  int delay; // in time_step
+    int pre_ID;
+    float weight;
+    int delay; // in time_step
+
+    bool operator< ( const Synapse &s ) const { return pre_ID < s.pre_ID; } //..used for equal_range
 };
 
 class production
@@ -62,11 +64,13 @@ class production
         int max_number_of_connections_per_pair; //.. max number of synapses per pair 
         int min_num_afferent_per_neuron; //.. minimum number of afferent neuron per neuron. ??? not sure yet if 1->1 is OK for PG
         vector<int> neuron_with_synapses; //.. ID of neurons with any number of synapses
-        map<int, vector<int>> neuron_with_all_afferent; //.. map each neuron with all of its afferent neurons
+        map<int, vector<Synapse>> neuron_with_all_afferent; //.. map each neuron with all of its afferent neurons
 
-        void find_neuron_with_synapses();
+        void find_post_neuron_with_synapses();
         vector<int> get_neuron_with_synapses() {return neuron_with_synapses;}
         void find_all_afferent_neuron_for_a_neuron();
+
+        void loop_over_map_for_Fig_9(map<int, vector<pair<Synapse, Synapse>>> &, bool, TNtuple &);
 
     public:
         production();
@@ -83,6 +87,10 @@ class production
 
         //..
         void analyze_weight_change_after_STDP(string &, string &); //.. production ntuple of weight before and after STDP
+        //..
+        map<int, vector<pair<Synapse, Synapse>>> find_duplicated_pre_post_pairs(); //.. map each neuron with all its afferent neurons that has two synases per pair
+        //..
+        void Fig_9(string &, string &); //.. reproduce Fig.9 of the paper 
 
         //..
         int find_PG(); // find polychronous group
