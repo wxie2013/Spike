@@ -13,6 +13,17 @@ production::~production()
 {
 }
 
+//__
+void production::clear()
+{
+    map_in_spk_ID_T.clear();
+    map_spk_ID_T.clear();
+    map_Synapse.clear();
+
+    //..
+    neuron_with_all_afferent.clear();
+    neuron_with_synapses.clear();
+}
 //__ read input spiking nueron data 
 void production::read_in_SpikeTimes_data()
 {
@@ -125,8 +136,10 @@ void production::read_Synapses_data()
 }
 
 //__ open data file from Spike output 
-void production::SetIntputBinaryFile(string dir)
+void production::SetIntputBinaryFile(string &dir)
 {
+    clear(); //.. clear all global maps and vector before reading in new SPIKE inputs
+
     neuron_dir = dir+"/neuron_dir/";
     input_dir = dir+"/input_dir/";
     synapse_dir = dir+"/synapse_dir/";
@@ -237,14 +250,10 @@ void production::analyze_weight_change_after_STDP(string &dir1, string &dir2)
 
     TNtuple nt("nt", "", "preid:postid:w1:w2:delay1:delay2");
 
-    map_Synapse.clear(); //.. make sure clear it to avoid carry on from the previous loop
     //.. get synapse information from 1st file 
     SetIntputBinaryFile(dir1);
     read_Synapses_data();
     multimap<int, Synapse> map1 = map_Synapse;
-
-    //.. clear the map_Synapse before reading the 2nd file 
-    map_Synapse.clear();
 
     //.. get synapse information from 1st file 
     SetIntputBinaryFile(dir2);
@@ -334,8 +343,8 @@ void production::Fig_9(string &dir1, string &dir2)
 
     TNtuple nt("nt", "", "preid:postid:w1:w2:delay1:delay2:trained");
 
-    map_Synapse.clear(); //.. make sure clear it to avoid carry on from the previous loop
     //.. get synapse information from 1st file 
+    cout<<" loading synapses in: "<<dir1<<endl;
     SetIntputBinaryFile(dir1);
     read_Synapses_data();
     map<int, vector<pair<Synapse, Synapse>>> m = find_duplicated_pre_post_pairs();
@@ -343,11 +352,9 @@ void production::Fig_9(string &dir1, string &dir2)
     loop_over_map_for_Fig_9(m,0, nt);
 
 
-    //.. clear the map_Synapse before reading the 2nd file 
-    map_Synapse.clear();
-    m.clear();
-
+    m.clear(); //.. clear it for next files
     //.. get synapse information from 1st file 
+    cout<<" loading synapses in: "<<dir2<<endl;
     SetIntputBinaryFile(dir2);
     read_Synapses_data();
     m = find_duplicated_pre_post_pairs();

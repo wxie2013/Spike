@@ -67,10 +67,11 @@ class production
         map<int, vector<Synapse>> neuron_with_all_afferent; //.. map each neuron with all of its afferent neurons
 
         void find_post_neuron_with_synapses();
-        vector<int> get_neuron_with_synapses() {return neuron_with_synapses;}
         void find_all_afferent_neuron_for_a_neuron();
 
         void loop_over_map_for_Fig_9(map<int, vector<pair<Synapse, Synapse>>> &, bool, TNtuple &);
+
+        void clear();
 
     public:
         production();
@@ -80,7 +81,7 @@ class production
         void set_max_number_of_connections_per_pair(int in) {max_number_of_connections_per_pair = in;} 
 
         //..
-        void SetIntputBinaryFile(string dir);  //..open spike output binary data. 
+        void SetIntputBinaryFile(string &);  //..open spike output binary data. 
         void read_in_SpikeTimes_data(); //.. read input spiking information from Spike binary output
         void read_SpikeTimes_data(); //.. read spiking information from Spike binary output
         void read_Synapses_data(); //.. read synapse information from Spike binary output
