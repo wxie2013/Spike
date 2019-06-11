@@ -46,12 +46,22 @@ aki_model::~aki_model()
 
 
 //__ run the model ...
-void aki_model::run_spiking_model(bool binary_output_only=true)
+void aki_model::run_spiking_model(bool binary_output_only=true, int which_stimuli = -1)
 {
     if(is_ActivityMonitor_on) 
         setup_ActivityMonitor();
 
-    model->run(simtime, plasticity_on);
+
+    if(which_stimuli !=-1) {// a single stimuli
+        input_neurons->select_stimulus(which_stimuli);
+        model->run(simtime, plasticity_on);
+    } else { //.. all stimulus
+        for(int i = 0; i< input_neurons->total_number_of_input_stimuli; i++) {
+            input_neurons->select_stimulus(i);
+            model->run(simtime, plasticity_on);
+        }
+    }
+
 
     //use binary mode. The text mode is too slow ..
     if(!binary_output_only) {
@@ -227,10 +237,10 @@ void aki_model::set_model_parameters()
     //float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; // 20ns
     //float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; // 100ns
 
-    biological_conductance_scaling_constant_lambda_G2E_FF = 0.15 * 0.0001 * original_timestep; //.. 0.3 ns. between [0.0, 0.4] ns
-    biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep; //.. 1.0 ns 
-    biological_conductance_scaling_constant_lambda_E2E_FB = 0.00005 * original_timestep; //.. 1.0 ns
-    biological_conductance_scaling_constant_lambda_E2E_L  = 0.00005 * original_timestep; //.. 1.0 ns
+    biological_conductance_scaling_constant_lambda_G2E_FF = 0.20 * 0.0001 * original_timestep; //.. 0.4 ns. between [0.0, 0.4] ns
+    biological_conductance_scaling_constant_lambda_E2E_FF = 0.00008 * original_timestep; //.. 1.6 ns 
+    biological_conductance_scaling_constant_lambda_E2E_FB = 0.00008 * original_timestep; //.. 1.6 ns
+    biological_conductance_scaling_constant_lambda_E2E_L  = 0.00008 * original_timestep; //.. 1.6 ns
     biological_conductance_scaling_constant_lambda_E2I_L  = 0.002 * original_timestep; //.. 40 ns
     biological_conductance_scaling_constant_lambda_I2E_L  = 0.004 * original_timestep;  //.. 80 ns
 

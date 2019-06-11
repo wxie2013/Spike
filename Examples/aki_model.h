@@ -234,5 +234,5 @@ class aki_model
         ~aki_model();
 
         void activate_ActivityMonitor(bool in) {is_ActivityMonitor_on = in;}
-        void run_spiking_model(bool);
+        void run_spiking_model(bool, int);
 };
