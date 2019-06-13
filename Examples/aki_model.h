@@ -90,7 +90,7 @@ class aki_model
         //Synaptic Parameters
         float weight_range_bottom;
         float weight_range_top;
-        float learning_rate_rho;
+        float learning_rate_rho_over_tau_delta_g;   // learn_rate/tau_delta_g
 
         // calculating different Connections
         float E2E_FF_minDelay;

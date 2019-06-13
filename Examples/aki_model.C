@@ -209,7 +209,7 @@ void aki_model::set_model_parameters()
     //Synaptic Parameters
     weight_range_bottom = 0.0;
     weight_range_top = 1.0;
-    learning_rate_rho = 0.1;
+    learning_rate_rho_over_tau_delta_g = 0.1;
 
     // calculating different Connections
     E2E_FF_minDelay = min_delay;
@@ -340,7 +340,7 @@ void aki_model::setup_STDP()
     STDP_PARAMS->decay_term_tau_D = decay_term_tau_D;
     STDP_PARAMS->model_parameter_alpha_D = 0.5;   
     STDP_PARAMS->synaptic_neurotransmitter_concentration_alpha_C = 0.5;  
-    STDP_PARAMS->learning_rate_rho = learning_rate_rho;
+    STDP_PARAMS->learning_rate_rho = learning_rate_rho_over_tau_delta_g;
 
     evans_stdp = new EvansSTDPPlasticity(conductance_spiking_synapses, lif_spiking_neurons, input_neurons, STDP_PARAMS);
 
