@@ -3,7 +3,7 @@
 #include "TNtuple.h"
 using namespace std;
 
-void plot(string dir)
+void plot_raw_Spike_output(string dir)
 {
     string neuron_dir = dir+"/neuron_dir/";
     string input_dir = dir+"/input_dir/";

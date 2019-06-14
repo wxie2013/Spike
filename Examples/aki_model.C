@@ -87,7 +87,7 @@ void aki_model::load_run_config_parameters()
     starting_time = 0;  // if !=0, it's trained and just load the parameter and continue training. When train again, starting_time is the end of the last training time. 
     simtime = 2.0f;  //simulation time in seconds starting from the starting_time; Can be set higher than usual for any period for generally test the network behaviour.
     plasticity_on = false;  // turn on the plasticity or not
-    timestep = 0.00002;  // can set to any value for testing. set it to original_timestep when run 
+    timestep = 0.00002;  //.. 0.02 ms
 
     is_ActivityMonitor_on = false; //.. consume lots of REM, turn it off by default. Turn it on when doing testing 
 
@@ -108,6 +108,7 @@ void aki_model::load_run_config_parameters()
         configFile >> filepath;
         configFile >> inputs_for_test_name;
         configFile >> existing_synapse_dir;
+        configFile >> learning_rate_rho_over_tau_delta_g;
     }
 
     // output file location ...
@@ -141,6 +142,7 @@ void aki_model::load_run_config_parameters()
     cout<<" input file: "<<source + filepath + inputs_for_test_name <<endl;
     cout<<" output location: "<<output_location<<endl;
     cout<<" exiting synaptic data location: "<<existing_synapse_dir<<endl;
+    cout<<" learning_rate_rho_over_tau_delta_g: "<<learning_rate_rho_over_tau_delta_g<<endl;
     cout<<" -----------------------------------------------"<<endl;
 
     load_existing_synapses = true;  //..default: load from existing file, creation from scratch is time consuming  ...
@@ -149,9 +151,6 @@ void aki_model::load_run_config_parameters()
 //__
 void aki_model::set_model_parameters()
 {
-    //..
-    original_timestep = 0.00002;      // This value is the timestep used in Aki's spiking investigations
-
     // Since the model can be run under different connectivity styles, these booleans turn them on/off
     E2E_FB_ON = true;
     E2E_L_ON = true;
@@ -209,7 +208,6 @@ void aki_model::set_model_parameters()
     //Synaptic Parameters
     weight_range_bottom = 0.0;
     weight_range_top = 1.0;
-    learning_rate_rho_over_tau_delta_g = 0.1;
 
     // calculating different Connections
     E2E_FF_minDelay = min_delay;
@@ -230,19 +228,12 @@ void aki_model::set_model_parameters()
 
     // Biological Scaling Constant = How much you multiply the weights up or down for realism/stability
     // If this value is roughly on the order of the Leakage Conductance, it will be close to one input spike -> one output spike (n.b. depends on syn tau)
-    //float biological_conductance_scaling_constant_lambda_G2E_FF = 0.1 * 0.0001 * original_timestep;  //..0.2ns
-    //float biological_conductance_scaling_constant_lambda_E2E_FF = 0.00005 * original_timestep; // 1ns
-    //float biological_conductance_scaling_constant_lambda_E2E_FB = 0.1 * 0.0001 * original_timestep; //0.2ns
-    //float biological_conductance_scaling_constant_lambda_E2E_L  = 0.000001 * original_timestep; //0.02ns
-    //float biological_conductance_scaling_constant_lambda_E2I_L  = 0.001 * original_timestep; // 20ns
-    //float biological_conductance_scaling_constant_lambda_I2E_L  = 0.005 * original_timestep; // 100ns
-
-    biological_conductance_scaling_constant_lambda_G2E_FF = 0.20 * 0.0001 * original_timestep; //.. 0.4 ns. between [0.0, 0.4] ns
-    biological_conductance_scaling_constant_lambda_E2E_FF = 0.00008 * original_timestep; //.. 1.6 ns 
-    biological_conductance_scaling_constant_lambda_E2E_FB = 0.00008 * original_timestep; //.. 1.6 ns
-    biological_conductance_scaling_constant_lambda_E2E_L  = 0.00008 * original_timestep; //.. 1.6 ns
-    biological_conductance_scaling_constant_lambda_E2I_L  = 0.002 * original_timestep; //.. 40 ns
-    biological_conductance_scaling_constant_lambda_I2E_L  = 0.004 * original_timestep;  //.. 80 ns
+    biological_conductance_scaling_constant_lambda_G2E_FF = 0.4e-9; //.. 0.4 ns. between [0.0, 0.4] ns. somehow below 0.3, there's no spikes. 
+    biological_conductance_scaling_constant_lambda_E2E_FF = 1.6e-9; //.. 1.6 ns 
+    biological_conductance_scaling_constant_lambda_E2E_FB = 1.6e-9; //.. 1.6 ns
+    biological_conductance_scaling_constant_lambda_E2E_L  = 1.6e-9; //.. 1.6 ns
+    biological_conductance_scaling_constant_lambda_E2I_L  = 40e-9; //.. 40 ns
+    biological_conductance_scaling_constant_lambda_I2E_L  = 80e-9;  //.. 80 ns
 
 
     // is the re-adjust the scaling factor come from optimization?

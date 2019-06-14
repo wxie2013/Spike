@@ -1,0 +1,31 @@
+1. time_step_in_C_D_not_removed/: 
+   - what's currently in the Spike model: Spike/Backend/CUDA/Plasticity/EvansSTDPPlasticity.cu
+   - when solving the differential equation for C(t) and D(t), the second term involving Dirac delta function 
+     is multipled by the timestep, which shouldn't be. 
+
+   A. Data_0_to_50seconds/:
+      - contains data with simulation time: 0-2, 0-4, 0-6, .....0-50 seconds. 
+   B. Data_every_2_seconds/"
+      - contains data with simulation time: 0-2, 2-4, 4-6, .....48-50 seconds. 
+
+   The point is to see if the weight from these two scenarios are different. 
+
+2. time_step_in_C_D_removed/:
+    same as 1. except removing the timestep factor on Dirac delta function. 
+
+
+3. production.C
+   access raw SPIKE output and produce next level output. 
+
+
+4. analyze_weight_change_after_STDP.C
+   plot the difference in weight betwene different scenarios mentioned above. 
+
+5. plot_raw_Spike_output.C
+   place raw SPIKE output into ntuples for visualization
+
+6. plot_Fig_9.C
+   plot the Fig.9 
+
+7. ana_Fig_9.C:
+   analyze raw SPIKE to produce output needed to produce Fig.9

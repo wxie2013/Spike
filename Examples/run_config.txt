@@ -1,8 +1,9 @@
-0.5       
-5
-1     
-0.00002 
+0.0
+0.5
+1
+2e-05
 ../../
-Data/MatlabGaborFilter/   
-simpleShapes/                    
+Data/MatlabGaborFilter/
+simpleShapes/
 output/synapse_dir/
+1.4
