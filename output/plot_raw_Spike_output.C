@@ -69,8 +69,9 @@ void plot_raw_Spike_output(string dir)
 
     //..
     cout<<" .. synapses ..."<<endl;
-    TNtuple* synapse = new TNtuple("synapse", "", "preid:postid:w:delay");
+    TNtuple* synapse = new TNtuple("synapse", "", "row:preid:postid:w:delay");
 
+    unsigned int row = 0;
     while (SynapticWeights.good()) {
         SynapticWeights.read((char*)&weight, sizeof(float));
         SynapticDelays.read((char*)&delay, sizeof(int));
@@ -84,6 +85,7 @@ void plot_raw_Spike_output(string dir)
             PostsynapticIDs.close();
             break;
         }
-        synapse->Fill(pre_ID, post_ID, weight, delay);
+        synapse->Fill(row, pre_ID, post_ID, weight, delay);
+        row++;
     }
 }
