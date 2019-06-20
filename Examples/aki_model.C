@@ -75,14 +75,18 @@ void aki_model::run_spiking_model(bool binary_output_only=true, int which_stimul
         }
 
         //
-        if(which_stimulus !=-1) {// a single stimuli
+        if(which_stimulus>0) {// a single stimuli
             input_neurons->select_stimulus(which_stimulus);
             model->run(simtime_per_epoch, plasticity_on);
-        } else { //.. all stimulus
+        } else if(which_stimulus==-1) { //.. all stimulus
             for(int i = 0; i< input_neurons->total_number_of_input_stimuli; i++) {
                 input_neurons->select_stimulus(i);
                 model->run(simtime_per_epoch, plasticity_on);
             }
+        } else {
+            cout<<" !!! please specify which stimulus is used as inputs. exit !!! "<<endl;
+            cout<<" !!! option: -1 or a positive number !!! "<<endl;
+            exit(0);
         }
 
 
