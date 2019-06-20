@@ -46,46 +46,69 @@ aki_model::~aki_model()
 
 
 //__ run the model ...
-void aki_model::run_spiking_model(bool binary_output_only=true, int which_stimuli = -1)
+void aki_model::run_spiking_model(bool binary_output_only=true, int which_stimulus = -1, unsigned int n_epoch = 1)
 {
     if(is_ActivityMonitor_on) 
         setup_ActivityMonitor();
 
+    //model->finalise_model(); //.. no need to do it here. in run function, it is called once in the first epoch
+    for(int epoch = 0; epoch<n_epoch; epoch++) {
+        cout<<"------------------"<<endl;
+        cout<<"  epoch: "<<epoch+1<<"/"<<n_epoch<<endl;
+        cout<<"------------------"<<endl;
 
-    if(which_stimuli !=-1) {// a single stimuli
-        input_neurons->select_stimulus(which_stimuli);
-        model->run(simtime, plasticity_on);
-    } else { //.. all stimulus
-        for(int i = 0; i< input_neurons->total_number_of_input_stimuli; i++) {
-            input_neurons->select_stimulus(i);
-            model->run(simtime, plasticity_on);
+        string epoch_dir = output_location + "epoch_" + to_string(epoch)+"/";
+
+        neuron_dir  = epoch_dir + "neuron_dir/";
+        input_dir  = epoch_dir + "input_dir/";
+        synapse_dir  = epoch_dir + "synapse_dir/";
+
+        if(mkdir(epoch_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) ||
+           mkdir(neuron_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
+           mkdir(input_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
+           mkdir(synapse_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
+
+            cout<<" !!! One or all of  following output directory already exist !!!"<<endl;
+            cout<<neuron_dir<<endl;
+            cout<<input_dir<<endl;
+            cout<<synapse_dir<<endl;
         }
-    }
+
+        //
+        if(which_stimulus !=-1) {// a single stimuli
+            input_neurons->select_stimulus(which_stimulus);
+            model->run(simtime_per_epoch, plasticity_on);
+        } else { //.. all stimulus
+            for(int i = 0; i< input_neurons->total_number_of_input_stimuli; i++) {
+                input_neurons->select_stimulus(i);
+                model->run(simtime_per_epoch, plasticity_on);
+            }
+        }
 
 
-    //use binary mode. The text mode is too slow ..
-    if(!binary_output_only) {
+        //use binary mode. The text mode is too slow ..
+        if(!binary_output_only) {
+            if(is_ActivityMonitor_on) {
+                spike_monitor->save_spikes_as_txt(neuron_dir);
+                input_spike_monitor->save_spikes_as_txt(input_dir);
+            }
+            model->spiking_synapses->save_connectivity_as_txt(synapse_dir);
+        }
+
         if(is_ActivityMonitor_on) {
-            spike_monitor->save_spikes_as_txt(neuron_dir);
-            input_spike_monitor->save_spikes_as_txt(input_dir);
+            spike_monitor->save_spikes_as_binary(neuron_dir);
+            input_spike_monitor->save_spikes_as_binary(input_dir);
         }
-        model->spiking_synapses->save_connectivity_as_txt(synapse_dir);
+        model->spiking_synapses->save_connectivity_as_binary(synapse_dir);
     }
-
-    if(is_ActivityMonitor_on) {
-        spike_monitor->save_spikes_as_binary(neuron_dir);
-        input_spike_monitor->save_spikes_as_binary(input_dir);
-    }
-    model->spiking_synapses->save_connectivity_as_binary(synapse_dir);
 }
 
 //__
 void aki_model::load_run_config_parameters()
 {
     //.. loading run configuation parameters ...
-    //
-    starting_time = 0;  // if !=0, it's trained and just load the parameter and continue training. When train again, starting_time is the end of the last training time. 
-    simtime = 2.0f;  //simulation time in seconds starting from the starting_time; Can be set higher than usual for any period for generally test the network behaviour.
+    //default. overwritten by values in run_config.txt
+    simtime_per_epoch = 2.0f;  //simulation time in seconds per epoch
     plasticity_on = false;  // turn on the plasticity or not
     timestep = 0.00002;  //.. 0.02 ms
 
@@ -100,8 +123,7 @@ void aki_model::load_run_config_parameters()
     if(!configFile.good()) {
         cout<<" run configuation file does not exist. Using the default value"<<endl;
     } else {
-        configFile >> starting_time;
-        configFile >> simtime;
+        configFile >> simtime_per_epoch;
         configFile >> plasticity_on;
         configFile >> timestep;
         configFile >> source;
@@ -112,31 +134,17 @@ void aki_model::load_run_config_parameters()
     }
 
     // output file location ...
-    output_location = source + "output/Start"+to_string(starting_time)+"End"+to_string(starting_time+simtime)+"/";
-    neuron_dir  = output_location + "neuron_dir/";
-    input_dir  = output_location + "input_dir/";
-    synapse_dir  = output_location + "synapse_dir/";
+    output_location = source + "output/SimTimePerEpoch_"+to_string(simtime_per_epoch)+"/";
 
     existing_synapse_dir = source + existing_synapse_dir;
 
-    cout<<starting_time<<" "<<to_string(starting_time)<<endl;
-
-    if( mkdir(output_location.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
-        mkdir(neuron_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
-        mkdir(input_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) || 
-        mkdir(synapse_dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
-
-        cout<<" !!! One or all of  following output directory can not be created, exit !!!"<<endl;
+    if( mkdir(output_location.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
+        cout<<" !!! the directory: "<<output_location<<" already exit !!!"<<endl;
         cout<<output_location<<endl;
-        cout<<neuron_dir<<endl;
-        cout<<input_dir<<endl;
-        cout<<synapse_dir<<endl;
-        exit(0);
     }
 
     cout<<" -----------------------------------------------"<<endl;
-    cout<<" starting_time: "<<starting_time<<endl;
-    cout<<" new_sim_time: "<<simtime<<endl;
+    cout<<" new_sim_time: "<<simtime_per_epoch<<endl;
     cout<<" plasticity_on: "<<plasticity_on<<endl;
     cout<<" timestep: "<<timestep<<endl;
     cout<<" input file: "<<source + filepath + inputs_for_test_name <<endl;

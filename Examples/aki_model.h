@@ -17,7 +17,7 @@ class aki_model
 {
     private:
         float starting_time;
-        float simtime;
+        float simtime_per_epoch;
         bool plasticity_on;
         float timestep;
         bool is_ActivityMonitor_on;
@@ -234,5 +234,5 @@ class aki_model
         ~aki_model();
 
         void activate_ActivityMonitor(bool in) {is_ActivityMonitor_on = in;}
-        void run_spiking_model(bool, int);
+        void run_spiking_model(bool, int, unsigned int);
 };
