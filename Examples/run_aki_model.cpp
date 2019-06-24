@@ -35,7 +35,7 @@ int main(int argc, char** argv)
             cout<<"   n_epoch: (1 - inf. Default: 1): "; assign_value(n_epoch); 
             cout<<"   is_ActivityMonitor_on (0/1. Default: 0): "; assign_value(is_ActivityMonitor_on);
             cout<<"   load_existing_synapses (0/1. Default: 1): "; assign_value(load_existing_synapses);
-            cout<<"   which_stimulus (-1:all/number(>0). Default: -1): "; assign_value(which_stimulus);
+            cout<<"   which_stimulus (-1:all/number(>=0). Default: -1): "; assign_value(which_stimulus);
             cout<<"   binary_output_only (0/1. Default: 1): "; assign_value(binary_output_only);
         } else if(option=="Y" || option=="y"){
             cout<<" +++ OK. using default value ++"<<endl;

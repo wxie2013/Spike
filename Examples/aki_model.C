@@ -75,7 +75,7 @@ void aki_model::run_spiking_model(bool binary_output_only=true, int which_stimul
         }
 
         //
-        if(which_stimulus>0) {// a single stimuli
+        if(which_stimulus>=0) {// a single stimuli
             input_neurons->select_stimulus(which_stimulus);
             model->run(simtime_per_epoch, plasticity_on);
         } else if(which_stimulus==-1) { //.. all stimulus
