@@ -138,7 +138,11 @@ void aki_model::load_run_config_parameters()
     }
 
     // output file location ...
-    output_location = source + "output/SimTimePerEpoch_"+to_string(simtime_per_epoch)+"/";
+    output_location = source + "output/SimTimePerEpoch_"+to_string(simtime_per_epoch);
+    if(plasticity_on)
+        output_location += "_STDP_ON/";
+    else
+        output_location += "_STDP_OFF/";
 
     existing_synapse_dir = source + existing_synapse_dir;
 
