@@ -1,6 +1,7 @@
 #include "production.h"
 #include <tuple>
 
+ClassImp(production);
 
 production::production()
 {
@@ -49,7 +50,7 @@ void production::read_in_SpikeTimes_data()
             in_SpikeIDs.close();
             break;
         }
-        map_in_spk_ID_T.insert(make_pair(-in_spkID, in_spkT)); //.. "-" because in synapses collection, input neuron ID is labelled as negative
+        map_in_spk_ID_T.insert(make_pair(-in_spkID-1, in_spkT)); //.. from the #define CORRECTED_PRESYNAPTIC_ID(id, is_input) (is_input ? (-1 * (id)) - 1 : id)
     }
     cout<<" --input spike neuron size: "<<map_in_spk_ID_T.size()<<endl;
 }
@@ -87,8 +88,8 @@ void  production::read_SpikeTimes_data()
 //__ read synapses data 
 void production::read_Synapses_data()
 {
-    float in_spkT, spkT, weight;
-    int in_spkID, spkID, delay, pre_ID, post_ID;
+    float weight;
+    int delay, pre_ID, post_ID;
 
     SynapticWeights.open(SynapticWeights_file, ios::in | ios::binary);
     SynapticDelays.open(SynapticDelays_file, ios::in | ios::binary);
@@ -193,7 +194,8 @@ void production::find_all_afferent_neuron_for_a_neuron()
     }
 }
 
-//__  find duplicated key-value pairs
+//__  find duplicated key-value pairs, i.e. pre/post with more max_number_of_connections_per_pair, e.g. 2, in this case
+//__ this was also used for debugging the raw output of SPIKE synapses
 map<int, vector<pair<Synapse, Synapse>>> production::find_duplicated_pre_post_pairs()
 {
     //
@@ -230,14 +232,7 @@ map<int, vector<pair<Synapse, Synapse>>> production::find_duplicated_pre_post_pa
     return neuron_with_all_afferent_with_2_synapses;
 }
 
-//__ find polychronous group 
-int production::find_PG()
-{
-    find_duplicated_pre_post_pairs();
-    return num_PG;
-}
-
-//__
+//__ compare the change of weight for each individual synapse between the two different trainings 
 void production::analyze_weight_change_after_STDP(string &dir1, string &dir2)
 {
     string file1 = dir1;
@@ -306,7 +301,7 @@ void production::analyze_weight_change_after_STDP(string &dir1, string &dir2)
     cout<<" -- created: "<<outfile<<" ----"<<endl;
 }
 
-//__
+//__ Fig.9 of Aki's paper. Can not reproduce but found similar behavior. Maybe due to the difference of input parameters
 void production::Fig_9(string &dir1, string &dir2)
 {
     TFile f("Fig_9.root", "RECREATE");
@@ -373,10 +368,56 @@ void production::Fig_9(string &dir1, string &dir2)
         it2++;
     }
 
-
-
     nt.Write();
     f.Close();
 
     cout<<" -- created: Fig_9.root ----"<<endl;
+}
+
+//__ map each neuron with all of its spiking time
+void production::find_all_spikeTime_of_a_neuron(multimap<int, float>& in_map)
+{
+    for(multimap<int, float>::iterator it = in_map.begin(); it != in_map.end(); it++)
+        neuron_with_spikes.push_back(it->first);
+
+    //.. now remove duplicates..
+    sort(neuron_with_spikes.begin(), neuron_with_spikes.end()); //.. sort it first as a general procedure
+    vector<int>::iterator ip = unique(neuron_with_spikes.begin(), neuron_with_spikes.end()); //.. call unique function. ip is the address of the last unique element
+    neuron_with_spikes.resize(distance(neuron_with_spikes.begin(), ip));
+
+    pair<multimap<int, float>::iterator, multimap<int, float>::iterator> range;
+    vector<float> spikeT;
+
+    for(unsigned int i = 0; i< in_map.size(); i++) {
+
+        spikeT.clear(); //.. clear before handling each neuron
+
+        range = in_map.equal_range(neuron_with_spikes[i]); //.. all afferent neuron of a post synaptic neuron. The map is sorted already
+
+        for(multimap<int, float>::iterator it = range.first; it!=range.second; it++) {
+            spikeT.push_back(it->second);
+        }
+        neuron_with_all_spikesTime.insert(make_pair(neuron_with_spikes[i], spikeT));
+    }
+}
+
+//__ find polychronous group. search only among the spiked neurons, otherwise too many possibilities. 
+int production::find_PG()
+{
+    find_post_neuron_with_synapses();
+    find_all_afferent_neuron_for_a_neuron();
+    find_all_spikeTime_of_a_neuron(map_in_spk_ID_T);
+    find_all_spikeTime_of_a_neuron(map_spk_ID_T);
+
+    for(map<int, vector<float>>::iterator it = neuron_with_all_spikesTime.begin(); it != neuron_with_all_spikesTime.end(); it++) {
+
+        cout<<"____ id: "<<it->first<<endl;
+        vector<float> spikeT = it->second;
+
+        for(unsigned int i = 0; i<spikeT.size(); i++) {
+            cout<<"    i: "<<i<<"/"<<spikeT.size()<<" "<<spikeT[i]<<endl;
+        }
+    }
+
+    return num_PG;
 }

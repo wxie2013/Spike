@@ -1,8 +1,13 @@
-#include "production.C"
+R__LOAD_LIBRARY(./lib_production.so)
+
+#include "production.h"
 
 void analyze_weight_change_after_STDP(const char* in1 = "", const char * in2 = "")
 {
     //.. note the "{}" instead of ()
+    vector<string> dir1 {"old_Start0.000000End2.000000/"};
+
+    /*
     vector<string> dir1 { 
             "Start0.000000End2.000000/", 
             "Start0.000000End4.000000/", 
@@ -31,7 +36,7 @@ void analyze_weight_change_after_STDP(const char* in1 = "", const char * in2 = "
             "Start0.000000End50.000000/" 
     };
     //.. note the "{}" instead of ()
-    vector<string> dir2 { 
+    vector<string> dir1 { 
             "Start0.000000End2.000000/",
             "Start2.000000End4.000000/",
             "Start4.000000End6.000000/",
@@ -58,17 +63,11 @@ void analyze_weight_change_after_STDP(const char* in1 = "", const char * in2 = "
             "Start46.000000End48.000000/",
             "Start48.000000End50.000000/"
     };
-            /*
-            "Start50.000000End52.000000/",
-            "Start52.000000End54.000000/",
-            "Start54.000000End56.000000/",
-            "Start56.000000End58.000000/",
-            "Start58.000000End60.000000/"
-    };
     */
 
     //..
     //vector<string> dir2(dir1.size(), "./");
+    vector<string> dir2{"old_Start0.000000End10.000000/"};
 
     string data1(in1);
     string data2(in2);

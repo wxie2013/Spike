@@ -1,3 +1,6 @@
+#ifndef PRODUCTION_H
+#define PRODUCTION_H
+
 #include <iostream>
 #include <map>
 #include <vector>
@@ -10,12 +13,17 @@
 #include "TFile.h"
 #include "TNtuple.h"
 
+//
+//#include "PolychromousGroup.h"
+
 using namespace std;
 
 struct Synapse {
     int pre_ID;
     float weight;
     int delay; // in time_step
+
+    float spikeTime; //pre_ID spike time in timestep
 
     bool operator< ( const Synapse &s ) const { return pre_ID < s.pre_ID; } //..used for equal_range
 };
@@ -66,10 +74,18 @@ class production
         vector<int> neuron_with_synapses; //.. ID of neurons with any number of synapses
         map<int, vector<Synapse>> neuron_with_all_afferent; //.. map each neuron with all of its afferent neurons
 
+        vector<int> neuron_with_spikes; //.. ID of neurons with any number of spikes
+        map<int, vector<float>> neuron_with_all_spikesTime; //.. map each neuron with all of its spike time
+
+        //
         void find_post_neuron_with_synapses();
         void find_all_afferent_neuron_for_a_neuron();
+        void find_all_spikeTime_of_a_neuron(multimap<int, float>&);
 
         void clear();
+
+        //
+        //PolychromousGroup *PG; 
 
     public:
         production();
@@ -93,4 +109,8 @@ class production
 
         //..
         int find_PG(); // find polychronous group
+
+        ClassDef(production, 1)
 };
+
+#endif

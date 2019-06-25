@@ -1,4 +1,4 @@
-#include "production.C"
+R__LOAD_LIBRARY(./lib_production.so)
 
 void ana(string dir="")
 {
@@ -8,7 +8,7 @@ void ana(string dir="")
     pd.read_SpikeTimes_data();
     pd.read_Synapses_data();
 
-    pd.set_max_number_of_connections_per_pair(1);
+    pd.set_max_number_of_connections_per_pair(2); //.. maximum two snapses per pair
     pd.find_PG();
 }
 

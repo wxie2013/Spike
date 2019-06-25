@@ -1,4 +1,6 @@
-#include "production.C"
+R__LOAD_LIBRARY(./lib_production.so)
+
+#include "production.h"
 
 void ana_Fig_9(const char* in1 = "", const char* in2 = "")
 {

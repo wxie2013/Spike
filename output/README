@@ -16,6 +16,7 @@
 
 3. production.C
    access raw SPIKE output and produce next level output. 
+   execute "make" first to compile it. 
 
 
 4. analyze_weight_change_after_STDP.C
