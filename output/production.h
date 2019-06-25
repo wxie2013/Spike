@@ -22,8 +22,14 @@ struct Synapse {
     int pre_ID;
     float weight;
     int delay; // in time_step
+    float pre_spikeTime; //pre_ID spike time in timestep
 
-    float spikeTime; //pre_ID spike time in timestep
+    Synapse() {
+        pre_ID = 0;
+        weight = 0;
+        delay = 0;
+        pre_spikeTime = -1;
+    }
 
     bool operator< ( const Synapse &s ) const { return pre_ID < s.pre_ID; } //..used for equal_range
 };
@@ -77,11 +83,20 @@ class production
         vector<int> neuron_with_spikes; //.. ID of neurons with any number of spikes
         map<int, vector<float>> neuron_with_all_spikesTime; //.. map each neuron with all of its spike time
 
+        //.. adding spike time into synapses. pair<post_ID, spike_time> is mapped to a vector contains all its synapses 
+        //.. with preID spike at time consistent with it's delay. It's a mutimap since there could be more than one synapses
+        //.. send spike to fire the post_ID
+        multimap<pair<int, float>, vector<Synapse>> synapses_with_spikes; 
+
         //
         void find_post_neuron_with_synapses();
         void find_all_afferent_neuron_for_a_neuron();
         void find_all_spikeTime_of_a_neuron(multimap<int, float>&);
 
+        template <typename M, typename Vtype>
+            Vtype find_a_key_in_a_map(M m, int id);
+
+        void combine_spikeTime_Synapses();
         void clear();
 
         //

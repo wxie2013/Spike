@@ -1,6 +1,8 @@
 #include "production.h"
 #include <tuple>
 
+const int timestep = 2e-5; //.. 0.02 ms
+
 ClassImp(production);
 
 production::production()
@@ -401,23 +403,77 @@ void production::find_all_spikeTime_of_a_neuron(multimap<int, float>& in_map)
     }
 }
 
-//__ find polychronous group. search only among the spiked neurons, otherwise too many possibilities. 
-int production::find_PG()
+//.. find the key in a map and return a vector of a certain type
+template <typename M, typename Vtype>
+Vtype production::find_a_key_in_a_map(M m, int id)
+{
+    Vtype vec;
+
+    auto it = m.find(id);
+    if(it != m.end()) 
+        vec = it->second;
+
+    return vec;
+}
+
+//__ combine Spike time with synapses 
+void production::combine_spikeTime_Synapses()
 {
     find_post_neuron_with_synapses();
     find_all_afferent_neuron_for_a_neuron();
     find_all_spikeTime_of_a_neuron(map_in_spk_ID_T);
     find_all_spikeTime_of_a_neuron(map_spk_ID_T);
 
-    for(map<int, vector<float>>::iterator it = neuron_with_all_spikesTime.begin(); it != neuron_with_all_spikesTime.end(); it++) {
+    //.. loop over neuron_with_all_afferent
+    int tot = 0;
+    for(map<int, vector<Synapse>>::iterator it = neuron_with_all_afferent.begin(); it != neuron_with_all_afferent.end(); it++) {
+        //.. find the spike time in the map of neuron_with_all_spikesTime
+        int post_id = it->first;
+        vector<float> post_spikeT = find_a_key_in_a_map<map<int, vector<float>>, vector<float>>(neuron_with_all_spikesTime, post_id);
+        vector<Synapse> synapses = it->second;
 
-        cout<<"____ id: "<<it->first<<endl;
-        vector<float> spikeT = it->second;
+        cout<<tot++<<" of "<<neuron_with_all_afferent.size()<<endl;
+        cout<<post_id<<" "<<post_spikeT.size()<<" "<<synapses.size()<<endl;
 
-        for(unsigned int i = 0; i<spikeT.size(); i++) {
-            cout<<"    i: "<<i<<"/"<<spikeT.size()<<" "<<spikeT[i]<<endl;
+        //.. once post_id spike time is defined, check if the pre_id spike at the right time according to the delay 
+        for(unsigned int i = 0; i < post_spikeT.size(); i++) {
+
+            float post_spike_time = post_spikeT[i];
+
+            //.. now loop over all synapses of the post_id
+            for(unsigned int m = 0; m < synapses.size(); m++) {
+
+                int pre_id = synapses[m].pre_ID;
+                int delay = synapses[m].delay*timestep; //.. in real time now.
+                vector<float> pre_spikeT = find_a_key_in_a_map<map<int, vector<float>>, vector<float>>(neuron_with_all_spikesTime, pre_id); //.. how many time this pre_id fired
+
+                //.. now check if one or more of the spiking synapses satisfy the  condition, i.e. pre_spike_time + delay ~= post_spike_time 
+                vector<Synapse> passed_synapse; //..collection of synapses satisfy the condition
+                for(unsigned int n = 0; n < pre_spikeT.size(); n++) {
+
+                    float pre_spike_time = pre_spikeT[n];
+                    float diff = post_spike_time - pre_spike_time - delay;
+                    if(fabs(diff) < timestep) {
+                        synapses[m].pre_spikeTime = pre_spike_time;  //now fill in the spike time of pre_ID
+                        passed_synapse.push_back(synapses[m]);
+                    }
+                }
+
+                //.. check if there are synapses satisfy the condition
+                if(passed_synapse.size()) {
+                    auto post_id_t_pair = std::make_pair(post_id, post_spike_time);
+                    synapses_with_spikes.insert(std::make_pair(post_id_t_pair, passed_synapse));
+                }
+            }
         }
     }
 
+    cout<<synapses_with_spikes.size()<<endl;
+}
+
+//__ find polychronous group. search only among the spiked neurons, otherwise too many possibilities. 
+int production::find_PG()
+{
+    combine_spikeTime_Synapses();
     return num_PG;
 }
