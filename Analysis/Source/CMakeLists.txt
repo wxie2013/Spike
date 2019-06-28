@@ -1,21 +1,27 @@
-## loop over each source file in this directory 
-foreach(source
-    production
-    )
+file(GLOB_RECURSE MAIN_FILES *.C)
+file(GLOB_RECURSE CUDA_FILES *.cu)
 
-   # The following folder will be included
-   if(BUILD_WITH_ROOT)
+set(WHOLE_ARCHIVE_FLAG "-Wl,--whole-archive")
+set(NO_WHOLE_ARCHIVE_FLAG "-Wl,--no-whole-archive")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-      ROOT_GENERATE_DICTIONARY(G__${source} ${source}.h LINKDEF ${source}LinkDef.h)
+####################################
+## handle the main files first ###
+set(dict_list)
+foreach(main_file ${MAIN_FILES}) 
+  get_filename_component(barename ${main_file} NAME_WE)
+  ROOT_GENERATE_DICTIONARY(G__${barename} ${barename}.h LINKDEF ${barename}LinkDef.h)
 
-      #---Create a shared library with geneated dictionary
-      add_library( ${source} SHARED ${source}.C G__${source}.cxx)
-      target_link_libraries(${source} ${ROOT_LIBRARIES})
+  #message("+++ list of files +++++")  # print out 
+  #message(${barename})
 
-   endif()
-
-   if (BUILD_WITH_CUDA)
-      target_link_libraries(${source} ${CUDA_LIBRARIES})
-  endif()
-
+  LIST(APPEND dict_list G__${barename}.cxx)
 endforeach()
+
+add_library(production SHARED
+  ${MAIN_FILES}
+  ${dict_list}
+)
+
+target_link_libraries(production ${ROOT_LIBRARIES})
+
