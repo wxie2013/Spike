@@ -1,0 +1,36 @@
+###########
+  Source: 
+###########
+
+1. production.C, production.h
+   all analysis functions. 
+
+##########
+  Macros
+##########
+1. analyze_weight_change_after_STDP.C
+   plot the difference in weight betwene different scenarios mentioned above. 
+
+2. plot_raw_Spike_output.C
+   place raw SPIKE output into ntuples for visualization
+
+3. plot_Fig_9.C
+   plot the Fig.9 
+
+4. ana_Fig_9.C:
+   analyze raw SPIKE to produce output needed to produce Fig.9
+
+5. ana.C
+   
+##########
+  Build 
+##########
+  make clean 
+  ./build.sh
+
+
+##########
+  lib 
+##########
+  contains all libs and corresponding *.pcm file. Note: one need to manually move the *.pcm file to the this directory, otherwise the shared lib can not work.
+
