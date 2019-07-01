@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(production)
 
 set (CMAKE_CXX_FLAGS "-std=c++14 -DVERBOSE=1")
+set(BUILD_DIR ${PROJECT_SOURCE_DIR}/Build) # the Build area
 
 # Set the output folder where your program will be created
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
