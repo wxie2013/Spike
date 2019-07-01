@@ -1,6 +1,6 @@
 # CMakeLists.txt for event package. It creates a library with dictionary and a main program
 
-cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
 project(production)
 
@@ -10,19 +10,14 @@ set (CMAKE_CXX_FLAGS "-std=c++14 -DVERBOSE=1")
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 ####### ROOT ##########
-option(BUILD_WITH_ROOT
-  "Enable ROOT"
-  ON)
-if(BUILD_WITH_ROOT)
-    list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-    find_package(ROOT REQUIRED COMPONENTS RIO Net)
-    include(${ROOT_USE_FILE})
-endif()
+list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+find_package(ROOT REQUIRED COMPONENTS RIO Net)
+include(${ROOT_USE_FILE})
 
 ##########  CUDA ##########
 option(BUILD_WITH_CUDA
   "Enable CUDA"
-  OFF)
+  ON)
 
 if(BUILD_WITH_CUDA)
   find_package(CUDA REQUIRED)
