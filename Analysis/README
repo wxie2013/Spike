@@ -25,9 +25,10 @@
 ##########
   Build 
 ##########
-  make clean 
   ./build.sh
-
+  
+   make clean 
+   make distclean  # build from scratch
 
 ##########
   lib 
