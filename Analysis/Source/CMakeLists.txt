@@ -12,7 +12,7 @@ foreach(main_file ${MAIN_FILES})
 
   get_filename_component(barename ${main_file} NAME_WE) # get the name without the extension
 
-  ROOT_GENERATE_DICTIONARY(G__${barename} ${barename}.h LINKDEF ${barename}LinkDef.h)
+  ROOT_GENERATE_DICTIONARY(G__${barename} ${barename}.h LINKDEF LinkDef.h)
 
   #message("+++ list of files +++++")  # print out 
   #message(${barename})
@@ -99,14 +99,3 @@ if(BUILD_WITH_CUDA)
 else()
     target_link_libraries(production ${ROOT_LIBRARIES})
 endif()
-
-## make install
-install(FILES  ${CMAKE_CURRENT_BINARY_DIR}/libproduction_rdict.pcm DESTINATION ${LIBRARY_OUTPUT_PATH})
-
-## make distclean ==> clean all build files and start from scratch 
-add_custom_target(distclean
-    COMMAND find ${BUILD_DIR}/. ! -name 'build.sh' -type f -exec rm -f {} +
-    COMMAND rm -f ${LIBRARY_OUTPUT_PATH}/lib*
-    COMMAND rm -rf ${BUILD_DIR}/Source ${BUILD_DIR}/CMakeFiles
-)
-
