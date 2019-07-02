@@ -2,4 +2,4 @@
 
 cmake ../
 make -j8
-make install
+make move_pcmfile

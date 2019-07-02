@@ -34,8 +34,10 @@ include_directories(BEFORE "${PROJECT_SOURCE_DIR}")
 
 add_subdirectory(Source)
 
-## make install
-install(FILES  ${CMAKE_CURRENT_BINARY_DIR}/Source/libproduction_rdict.pcm DESTINATION ${LIBRARY_OUTPUT_PATH})
+## put all the PCM file into the same directory of share lib 
+add_custom_target(move_pcmfile
+    COMMAND cp ${BUILD_DIR}/Source/*.pcm  ${LIBRARY_OUTPUT_PATH}
+)
 
 ## make distclean ==> clean all build files and start from scratch
 add_custom_target(distclean
@@ -43,5 +45,3 @@ add_custom_target(distclean
     COMMAND rm -f ${LIBRARY_OUTPUT_PATH}/lib*
     COMMAND rm -rf ${BUILD_DIR}/Source ${BUILD_DIR}/CMakeFiles
 )
-
-
